@@ -2,6 +2,12 @@
 #
 # Note: this Makefile works with GNUMake and BSDMake
 #
+build:
+	go build ./...
+
+test:
+	go test ./...
+
 lint:
 	@golangci-lint --version
 	# Will use .golangci.yml
