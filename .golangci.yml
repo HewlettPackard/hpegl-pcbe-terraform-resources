@@ -1,0 +1,70 @@
+#(C) Copyright 2024 Hewlett Packard Enterprise Development LP
+
+run:
+  deadline: 240s
+  tests: true
+  skip-dirs:
+    - internal/sdk 
+  build-tags: acceptance
+
+linters-settings:
+  dupl:
+    threshold: 110
+  lll:
+    line-length: 100
+  goimports:
+    local-prefixes: "github.com/HewlettPackard"
+  godox:
+    keywords:
+      - OPTIMIZE
+  exhaustive:
+    default-signifies-exhaustive: true
+  funlen:
+    lines: 90
+    statements: 60
+
+linters:
+  disable-all: true
+  enable:
+    - gofmt
+    - gosimple
+    - revive
+    - govet
+    - goconst
+    - ineffassign
+    - misspell
+    - unconvert
+    - gosec
+    - lll
+
+issues:
+
+  exclude-rules:
+    # Exclude lll issues for long lines with go:generate
+    - linters:
+        - lll
+      source: "^//go:generate "
+
+    # ignore function length for tests as look up tables typically exceed.
+    - linters:
+        - funlen
+        - goerr113
+      path: _test\.go
+
+    - linters:
+        - dupl
+      path: ".*generated.*go"
+
+    - linters:
+        - goconst
+      path: ".*generated.*go"
+
+    - linters:
+        - staticcheck
+      text: "SA9003:"
+
+    - linters:
+        - stylecheck
+      text: "ST1005:"
+
+  max-same-issues: 0
