@@ -3,7 +3,7 @@ name: Lint
 
 on: [push, pull_request]
 jobs:
-  ci:
+  lint:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
