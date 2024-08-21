@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/auth"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/debug"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/defaults"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/async"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/systems"
@@ -32,6 +33,12 @@ func (c *PCBeClient) NewAsyncClient(ctx context.Context) (*async.ApiClient, erro
 	tp := auth.NewPcbeAccessTokenProvider(c.Config.Token)
 	authProvider := authentication.NewBaseBearerTokenAuthenticationProvider(tp)
 	observeOpts := nethttplibrary.ObservabilityOptions{}
+	if c.Config.HTTPDump {
+		debugOpts := debug.NewInspectionOptions()
+		debugOpts.Enabled = true
+		debugOptsHandler := debug.NewInspectionHandlerWithOptions(*debugOpts)
+		middlewares = append(middlewares, debugOptsHandler)
+	}
 	headerOpts := nethttplibrary.NewHeadersInspectionOptions()
 	headerOpts.InspectResponseHeaders = true
 	headerOptsHandler := nethttplibrary.NewHeadersInspectionHandlerWithOptions(*headerOpts)
@@ -58,6 +65,12 @@ func (c *PCBeClient) NewVirtClient(
 	tp := auth.NewPcbeAccessTokenProvider(c.Config.Token)
 	authProvider := authentication.NewBaseBearerTokenAuthenticationProvider(tp)
 	observeOpts := nethttplibrary.ObservabilityOptions{}
+	if c.Config.HTTPDump {
+		debugOpts := debug.NewInspectionOptions()
+		debugOpts.Enabled = true
+		debugOptsHandler := debug.NewInspectionHandlerWithOptions(*debugOpts)
+		middlewares = append(middlewares, debugOptsHandler)
+	}
 	headerOpts := nethttplibrary.NewHeadersInspectionOptions()
 	headerOpts.InspectResponseHeaders = true
 	headerOptsHandler := nethttplibrary.NewHeadersInspectionHandlerWithOptions(*headerOpts)
@@ -84,6 +97,12 @@ func (c *PCBeClient) NewSysClient(
 	tp := auth.NewPcbeAccessTokenProvider(c.Config.Token)
 	authProvider := authentication.NewBaseBearerTokenAuthenticationProvider(tp)
 	observeOpts := nethttplibrary.ObservabilityOptions{}
+	if c.Config.HTTPDump {
+		debugOpts := debug.NewInspectionOptions()
+		debugOpts.Enabled = true
+		debugOptsHandler := debug.NewInspectionHandlerWithOptions(*debugOpts)
+		middlewares = append(middlewares, debugOptsHandler)
+	}
 	headerOpts := nethttplibrary.NewHeadersInspectionOptions()
 	headerOpts.InspectResponseHeaders = true
 	headerOptsHandler := nethttplibrary.NewHeadersInspectionHandlerWithOptions(*headerOpts)
