@@ -11,9 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 )
 
-var (
-	_ provider.Provider = &pcbeProvider{}
-)
+var _ provider.Provider = &pcbeProvider{}
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
@@ -21,9 +19,6 @@ func New(version string) func() provider.Provider {
 			version: version,
 		}
 	}
-}
-
-type pcbeProviderModel struct {
 }
 
 type pcbeProvider struct {

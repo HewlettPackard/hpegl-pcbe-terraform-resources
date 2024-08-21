@@ -4,7 +4,7 @@ run:
   deadline: 240s
   tests: true
   skip-dirs:
-    - internal/sdk 
+    - internal/sdk
   build-tags: acceptance
 
 linters-settings:
@@ -26,16 +26,20 @@ linters-settings:
 linters:
   disable-all: true
   enable:
-    - gofmt
-    - gosimple
-    - revive
-    - govet
     - goconst
-    - ineffassign
-    - misspell
-    - unconvert
+    - gofmt
+    - gofumpt
     - gosec
+    - gosimple
+    - govet
+    - ineffassign
     - lll
+    - misspell
+    - nlreturn
+    - revive
+    - typecheck
+    - unconvert
+    - unused
 
 issues:
 
