@@ -5,4 +5,5 @@ package constants
 const (
 	ProviderType  = "hpegl"
 	ProviderBlock = "pc"
+	NameFilter = "name eq "
 )
