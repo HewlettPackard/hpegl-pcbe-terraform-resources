@@ -15,4 +15,5 @@ jobs:
           go-version: ${{ matrix.go }}
       - run: go version
       - run: make build
+      - run: make build-experimental
       - run: make test
