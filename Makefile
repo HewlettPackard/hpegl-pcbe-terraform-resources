@@ -5,8 +5,8 @@
 build:
 	go build ./...
 
-build-experimental:
-	go build -tags experimental ./...
+install:
+	go install ./...
 
 test:
 	go test ./...
@@ -15,3 +15,9 @@ lint:
 	@golangci-lint --version
 	# Will use .golangci.yml
 	golangci-lint run
+
+build-experimental:
+	go build -tags experimental ./...
+
+install-experimental:
+	go install -tags experimental  ./...
