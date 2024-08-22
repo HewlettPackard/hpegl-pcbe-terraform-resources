@@ -8,7 +8,6 @@ import (
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/constants"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/defaults"
-	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -167,13 +166,6 @@ func (p *PCBeProvider) Configure(
 
 	resp.DataSourceData = client
 	resp.ResourceData = client
-}
-
-// DataSources defines the data sources implemented in the provider.
-func (p *PCBeProvider) DataSources(
-	_ context.Context,
-) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
 }
 
 // Resources defines the resources implemented in the provider.
