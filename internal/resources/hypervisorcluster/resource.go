@@ -4,8 +4,11 @@ package hypervisorcluster
 
 import (
 	"context"
+	"path"
 
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/poll"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/systems/privatecloudbusiness"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt/virtualization"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -188,12 +191,115 @@ func doRead(
 	(*dataP).AppInfo.Vmware = vmwareValueObj
 }
 
+func doCreate(
+	ctx context.Context,
+	client client.PCBeClient,
+	dataP *HypervisorclusterModel,
+	diagsP *diag.Diagnostics,
+) {
+	sysClient, sysHeaderOpts, err := client.NewSysClient(ctx)
+	if err != nil {
+		(*diagsP).AddError(
+			"error creating hypervisorcluster",
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	prb := privatecloudbusiness.
+		NewV1beta1SystemsItemAddHypervisorClusterPostRequestBody()
+	name := (*dataP).Name.ValueString()
+	prb.SetHypervisorClusterName(&name)
+
+	// TODO: (API) Support configureVds when FF-28975 is addressed
+	configureVds := false
+	prb.SetConfigureVds(&configureVds)
+
+	vmware, diags := NewVmwareValue(
+		(*dataP).AppInfo.Vmware.AttributeTypes(ctx),
+		(*dataP).AppInfo.Vmware.Attributes(),
+	)
+	(*diagsP).Append(diags...)
+	if diags.HasError() {
+		return
+	}
+
+	datacenterInfo, diags := NewDatacenterInfoValue(
+		vmware.DatacenterInfo.AttributeTypes(ctx),
+		vmware.DatacenterInfo.Attributes(),
+	)
+
+	(*diagsP).Append(diags...)
+	if diags.HasError() {
+		return
+	}
+
+	dataCenterName := datacenterInfo.Name.ValueString()
+	prb.SetVsphereDatacenterName(&dataCenterName)
+	prc := privatecloudbusiness.
+		V1beta1SystemsItemAddHypervisorClusterRequestBuilderPostRequestConfiguration{}
+	systemID := (*dataP).HciClusterUuid.ValueString()
+	_, err = sysClient.PrivateCloudBusiness().
+		V1beta1().
+		Systems().
+		ById(systemID).
+		AddHypervisorCluster().
+		Post(context.Background(), prb, &prc)
+	if err != nil {
+		(*diagsP).AddError(
+			"error creating hypervisorcluster",
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	location := sysHeaderOpts.GetResponseHeaders().Get("Location")[0]
+	sysHeaderOpts.ResponseHeaders.Clear()
+	operationID := path.Base(location)
+	sourceURI := poll.AsyncOperation(ctx, client, operationID, diagsP)
+	if (*diagsP).HasError() {
+		return
+	}
+
+	if sourceURI == nil {
+		(*diagsP).AddError(
+			"error creating hypervisorcluster",
+			"async operation did not return a source uri",
+		)
+
+		return
+	}
+
+	// Set id in state as early as possible
+	hypervisorClusterID := path.Base(*sourceURI)
+	(*dataP).Id = types.StringValue(hypervisorClusterID)
+}
+
 func (r *Resource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
 	resp *resource.CreateResponse,
 ) {
-	tflog.Error(ctx, "create hypervisorcluster is not implemented")
+	var data HypervisorclusterModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	doCreate(ctx, *r.client, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	doRead(ctx, *r.client, &data, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *Resource) Read(
