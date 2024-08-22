@@ -5,6 +5,9 @@
 build:
 	go build ./...
 
+build-experimental:
+	go build -tags experimental ./...
+
 test:
 	go test ./...
 
