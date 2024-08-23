@@ -451,7 +451,51 @@ func (r *Resource) Delete(
 	req resource.DeleteRequest,
 	resp *resource.DeleteResponse,
 ) {
-	tflog.Error(ctx, "delete datastore is not implemented")
+	var data DatastoreModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id := data.Id.ValueString()
+	client := *r.client
+	virtClient, virtHeaderOpts, err := client.NewVirtClient(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"error deleting datastore",
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	rc := virtualization.
+		V1beta1DatastoresDatastoresItemRequestBuilderDeleteRequestConfiguration{}
+
+	_, err = virtClient.Virtualization().
+		V1beta1().
+		Datastores().
+		ById(id).
+		Delete(ctx, &rc)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"error deleting datastore",
+			"delete failed with: "+err.Error(),
+		)
+
+		return
+	}
+
+	location := virtHeaderOpts.GetResponseHeaders().Get("Location")[0]
+	virtHeaderOpts.ResponseHeaders.Clear()
+	operationID := path.Base(location)
+	poll.AsyncOperation(ctx, client, operationID, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 func (r *Resource) ImportState(
