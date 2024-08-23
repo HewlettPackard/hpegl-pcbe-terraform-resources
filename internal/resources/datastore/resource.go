@@ -4,9 +4,15 @@ package datastore
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"path"
 
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/constants"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/poll"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt/virtualization"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt/virtualization/v1beta1/datastores"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	tfpath "github.com/hashicorp/terraform-plugin-framework/path"
@@ -57,6 +63,53 @@ func (r *Resource) Configure(
 	}
 
 	r.client = req.ProviderData.(*client.PCBeClient)
+}
+
+func createNameFilter(name string) string {
+	return constants.NameFilter + name
+}
+
+// TODO: (API) remove this workaround when FF-28659 is fixed
+func getDataStoreID(
+	ctx context.Context,
+	client client.PCBeClient,
+	name string,
+) (string, error) {
+	virtClient, _, err := client.NewVirtClient(ctx)
+	if err != nil {
+		msg := "error getting datastore ID"
+		tflog.Error(ctx, msg)
+
+		return "", errors.New(msg)
+	}
+	grc := virtualization.V1beta1DatastoresRequestBuilderGetRequestConfiguration{}
+	qp := virtualization.V1beta1DatastoresRequestBuilderGetQueryParameters{}
+	filter := createNameFilter(name)
+	qp.Filter = &filter
+	grc.QueryParameters = &qp
+
+	datastores, err := virtClient.Virtualization().
+		V1beta1().
+		Datastores().
+		GetAsDatastoresGetResponse(ctx, &grc)
+
+	if datastores.GetTotal() == nil {
+		msg := "'total' field is nil"
+		tflog.Error(ctx, msg)
+
+		return "", errors.New(msg)
+	}
+	total := *(datastores.GetTotal())
+	if total != 1 {
+		msg := fmt.Sprintf("required 1 datastore with name %s, got %d", name, total)
+		tflog.Error(ctx, msg)
+
+		return "", errors.New(msg)
+	}
+
+	id := datastores.GetItems()[0].GetId()
+
+	return *id, err
 }
 
 func doRead(
@@ -235,12 +288,133 @@ func doRead(
 		DatacentersInfo.ElementType(ctx), datacentersInfoValues)
 }
 
+func doCreate(
+	ctx context.Context,
+	client client.PCBeClient,
+	dataP *DatastoreModel,
+	diagsP *diag.Diagnostics,
+) {
+	virtClient, virtHeaderOpts, err := client.NewVirtClient(ctx)
+	if err != nil {
+		(*diagsP).AddError(
+			"error creating datastore",
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	prb := virtualization.NewV1beta1DatastoresPostRequestBody()
+	name := (*dataP).Name.ValueString()
+	prb.SetName(&name)
+
+	// TODO: (API) Allow setting cipher when FF-29512 is fixed
+	cipher := datastores.NONE_DATASTORESPOSTREQUESTBODY_VOLUMEINFO_ENCRYPTION_CIPHER
+	enc := virtualization.NewV1beta1DatastoresPostRequestBody_volumeInfo_encryption()
+
+	// TODO: should be able to use enum for cipher (bug in sdk or spec processing?)
+	cipherMap := map[string]any{
+		"cipher": cipher.String(),
+	}
+
+	enc.SetAdditionalData(cipherMap)
+	qos := virtualization.NewV1beta1DatastoresPostRequestBody_volumeInfo_qos()
+	// TODO: (API) Allow setting iopsLimit when FF-29512 is fixed
+	var iopsLimit float64 = -1 // -1 implies no limit
+	qos.SetIopsLimit(&iopsLimit)
+
+	// TODO: (API) Allow setting mbsLimit when FF-29512 is fixed
+	var mbpsLimit float64 = -1 // -1 implies no limit
+	qos.SetMbpsLimit(&mbpsLimit)
+
+	volInfo := virtualization.NewV1beta1DatastoresPostRequestBody_volumeInfo()
+
+	// TODO: (API) Allow setting duplication when FF-29512 is fixed
+	False := false
+	volInfo.SetDeduplication(&False)
+	volInfo.SetEncryption(enc)
+	volInfo.SetQos(qos)
+
+	prb.SetVolumeInfo(volInfo)
+
+	sizeInBytes := (*dataP).CapacityInBytes.ValueInt64()
+	prb.SetSizeInBytes(&sizeInBytes)
+
+	targetHypervisorClusterID := (*dataP).ClusterInfo.Id.ValueString()
+	prb.SetTargetHypervisorClusterId(&targetHypervisorClusterID)
+
+	hciClusterUUID := (*dataP).HciClusterUuid.ValueString()
+	prb.SetStorageSystemId(&hciClusterUUID)
+
+	datastoreType := datastores.VMFS_DATASTORESPOSTREQUESTBODY_DATASTORETYPE
+	// TODO: should be able to use enum here (bug in sdk or spec processing?)
+	datastoreTypeMap := map[string]any{
+		"datastoreType": datastoreType.String(),
+	}
+
+	prb.SetAdditionalData(datastoreTypeMap)
+	prc := virtualization.V1beta1DatastoresRequestBuilderPostRequestConfiguration{}
+	_, err = virtClient.Virtualization().V1beta1().Datastores().Post(ctx, prb, &prc)
+	if err != nil {
+		(*diagsP).AddError(
+			"error creating datastore",
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	location := virtHeaderOpts.GetResponseHeaders().Get("Location")[0]
+	virtHeaderOpts.ResponseHeaders.Clear()
+
+	operationID := path.Base(location)
+	poll.AsyncOperation(ctx, client, operationID, diagsP)
+	if (*diagsP).HasError() {
+		return
+	}
+
+	datastoreID, err := getDataStoreID(
+		ctx, client,
+		(*dataP).Name.ValueString(),
+	)
+	if err != nil {
+		(*diagsP).AddError(
+			"error creating datastore",
+			"failed to get datastore: "+err.Error(),
+		)
+
+		return
+	}
+
+	(*dataP).Id = types.StringValue(datastoreID)
+}
+
 func (r *Resource) Create(
 	ctx context.Context,
 	req resource.CreateRequest,
 	resp *resource.CreateResponse,
 ) {
-	tflog.Error(ctx, "update datastore is not implemented")
+	var data DatastoreModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	doCreate(ctx, *r.client, &data, &resp.Diagnostics)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	doRead(ctx, *r.client, &data, &resp.Diagnostics)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *Resource) Read(
