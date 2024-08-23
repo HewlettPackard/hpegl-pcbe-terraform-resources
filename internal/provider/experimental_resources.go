@@ -7,6 +7,7 @@ package provider
 import (
 	"context"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/resources/datastore"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/resources/hypervisorcluster"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 )
 
@@ -16,5 +17,6 @@ func (p *PCBeProvider) Resources(
 ) []func() resource.Resource {
 	return []func() resource.Resource{
 		datastore.NewResource,
+		hypervisorcluster.NewResource,
 	}
 }
