@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -166,11 +165,4 @@ func (p *PCBeProvider) Configure(
 
 	resp.DataSourceData = client
 	resp.ResourceData = client
-}
-
-// Resources defines the resources implemented in the provider.
-func (p *PCBeProvider) Resources(
-	_ context.Context,
-) []func() resource.Resource {
-	return []func() resource.Resource{}
 }
