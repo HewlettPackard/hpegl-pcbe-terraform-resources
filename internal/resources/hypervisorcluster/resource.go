@@ -4,6 +4,7 @@ package hypervisorcluster
 
 import (
 	"context"
+	"fmt"
 	"path"
 
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
@@ -91,6 +92,25 @@ func doRead(
 		(*diagsP).AddError(
 			"error reading hypervisor cluster "+hypervisorClusterID,
 			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	if getResp.GetId() == nil {
+		(*diagsP).AddError(
+			"error reading hypervisor cluster "+hypervisorClusterID,
+			"'id' is nil",
+		)
+
+		return
+	}
+
+	if *(getResp.GetId()) != hypervisorClusterID {
+		(*diagsP).AddError(
+			"error reading hypervisor cluster "+hypervisorClusterID,
+			fmt.Sprintf("'id' mismatch: %s != %s",
+				*(getResp.GetId()), hypervisorClusterID),
 		)
 
 		return
