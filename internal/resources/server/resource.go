@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/systems/privatecloudbusiness"
@@ -96,6 +97,17 @@ func doRead(
 		(*diagsP).AddError(
 			"error reading server",
 			"'id' is nil",
+		)
+
+		return
+	}
+
+	if *(server.GetId()) != serverID {
+		(*diagsP).AddError(
+			"error reading server",
+			fmt.Sprintf("'id' mismatch: %s != %s",
+				*(server.GetId()), serverID,
+			),
 		)
 
 		return
