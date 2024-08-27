@@ -128,7 +128,7 @@ func doRead(
 		return
 	}
 
-	datastoreID := (*dataP).Id.ValueString()
+	IDFromState := (*dataP).Id.ValueString()
 
 	grc := virtualization.
 		V1beta1DatastoresDatastoresItemRequestBuilderGetRequestConfiguration{}
@@ -136,7 +136,7 @@ func doRead(
 	datastore, err := virtClient.Virtualization().
 		V1beta1().
 		Datastores().
-		ById(datastoreID).
+		ById(IDFromState).
 		GetAsDatastoresGetResponse(ctx, &grc)
 	if err != nil {
 		(*diagsP).AddError(
@@ -146,6 +146,18 @@ func doRead(
 
 		return
 	}
+
+	datastoreID := datastore.GetId()
+	if datastoreID == nil {
+		(*diagsP).AddError(
+			"error reading datastore",
+			"'id' is nil",
+		)
+
+		return
+	}
+
+	(*dataP).Id = types.StringValue(*datastoreID)
 
 	datastoreName := datastore.GetName()
 	if datastoreName == nil {
