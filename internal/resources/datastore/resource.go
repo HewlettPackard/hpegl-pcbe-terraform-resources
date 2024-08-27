@@ -157,6 +157,17 @@ func doRead(
 		return
 	}
 
+	if *datastoreID == IDFromState {
+		(*diagsP).AddError(
+			"error reading datastore",
+			fmt.Sprintf("'id' mismatch: %s != %s",
+				*datastoreID, IDFromState,
+			),
+		)
+
+		return
+	}
+
 	(*dataP).Id = types.StringValue(*datastoreID)
 
 	datastoreName := datastore.GetName()
