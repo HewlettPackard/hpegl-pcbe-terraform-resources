@@ -147,6 +147,26 @@ func doRead(
 		return
 	}
 
+	if datastore.GetId() == nil {
+		(*diagsP).AddError(
+			"error reading datastore",
+			"'id' is nil",
+		)
+
+		return
+	}
+
+	if *(datastore.GetId()) != datastoreID {
+		(*diagsP).AddError(
+			"error reading datastore",
+			fmt.Sprintf("'id' mismatch: %s != %s",
+				*(datastore.GetId()), datastoreID,
+			),
+		)
+
+		return
+	}
+
 	datastoreName := datastore.GetName()
 	if datastoreName == nil {
 		(*diagsP).AddError(
