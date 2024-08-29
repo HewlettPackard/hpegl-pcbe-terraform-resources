@@ -113,6 +113,26 @@ func doRead(
 		return
 	}
 
+	if server.GetSystemId() == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'systemId' is nil",
+		)
+
+		return
+	}
+
+	if *(server.GetSystemId()) != systemID {
+		(*diagsP).AddError(
+			"error reading server",
+			fmt.Sprintf("'systemId' mismatch: %s != %s",
+				*(server.GetSystemId()), systemID,
+			),
+		)
+
+		return
+	}
+
 	if server.GetName() == nil {
 		(*diagsP).AddError(
 			"error reading server",
