@@ -116,6 +116,28 @@ func doRead(
 		return
 	}
 
+	if getResp.GetHciClusterUuid() == nil {
+		(*diagsP).AddError(
+			"error reading hypervisor cluster "+hypervisorClusterID,
+			"'hciClusterUuid' is nil",
+		)
+
+		return
+	}
+
+	systemID := (*dataP).HciClusterUuid.ValueString()
+	if *(getResp.GetHciClusterUuid()) != systemID {
+		(*diagsP).AddError(
+			"error reading hypervisor cluster "+hypervisorClusterID,
+			fmt.Sprintf("'hciClusterUuid' mismatch: %s != %s",
+				*(getResp.GetHciClusterUuid()), systemID),
+		)
+
+		return
+	}
+
+	(*dataP).HciClusterUuid = types.StringValue(*(getResp.GetHciClusterUuid()))
+
 	if getResp.GetName() == nil {
 		(*diagsP).AddError(
 			"error reading hypervisor cluster "+hypervisorClusterID,
@@ -126,17 +148,6 @@ func doRead(
 	}
 
 	(*dataP).Name = types.StringValue(*(getResp.GetName()))
-
-	if getResp.GetHciClusterUuid() == nil {
-		(*diagsP).AddError(
-			"error reading hypervisor cluster "+hypervisorClusterID,
-			"'hciClusterUuid' is nil",
-		)
-
-		return
-	}
-
-	(*dataP).HciClusterUuid = types.StringValue(*(getResp.GetHciClusterUuid()))
 
 	if getResp.GetAppInfo() == nil {
 		(*diagsP).AddError(
