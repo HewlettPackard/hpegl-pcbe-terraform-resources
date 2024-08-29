@@ -1,0 +1,1 @@
+{"name":"mclaren-ds19","sizeInBytes":17179869184,"storageSystemId":"126fd201-9e6e-5e31-9ffb-a766265b1fd3","targetHypervisorClusterId":"acd4daea-e5e3-5f35-8be3-ce4a4b6d946c","volumeInfo":{"deduplication":false,"encryption":{"cipher":"None"},"qos":{"iopsLimit":1000000,"mbpsLimit":1000000}},"datastoreType":"VMFS"}
