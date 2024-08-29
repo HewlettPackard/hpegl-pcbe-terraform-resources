@@ -167,6 +167,27 @@ func doRead(
 		return
 	}
 
+	if datastore.GetHciClusterUuid() == nil {
+		(*diagsP).AddError(
+			"error reading datastore",
+			"'hciClusterUuid' is nil",
+		)
+
+		return
+	}
+
+	systemID := (*dataP).HciClusterUuid.ValueString()
+	if *(datastore.GetHciClusterUuid()) != systemID {
+		(*diagsP).AddError(
+			"error reading datastore",
+			fmt.Sprintf("'hciClusterUuid' mismatch: %s != %s",
+				*(datastore.GetHciClusterUuid()), systemID,
+			),
+		)
+
+		return
+	}
+
 	datastoreName := datastore.GetName()
 	if datastoreName == nil {
 		(*diagsP).AddError(
