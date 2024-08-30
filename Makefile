@@ -2,6 +2,7 @@
 #
 # Note: this Makefile works with GNUMake and BSDMake
 #
+
 build:
 	go build ./...
 
@@ -23,7 +24,10 @@ testacc:
 
 testacc-simulation:
 	go install -tags experimental,simulation ./cmd/...
-	env TF_ACC=1 go test -v -tags simulation ./test/...
+	tempfile=$$(mktemp); \
+	sed "s@__HOME__@${HOME}@g" test/.terraformrc > $$tempfile; \
+	env TF_ACC=1 env TF_CLI_CONFIG_FILE=$$tempfile \
+		go test -v -tags simulation ./test/...
 
 lint:
 	@golangci-lint --version
