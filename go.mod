@@ -1,6 +1,6 @@
 module github.com/HewlettPackard/hpegl-pcbe-terraform-resources
 
-go 1.22.3
+go 1.21.0
 
 require (
 	github.com/google/uuid v1.6.0
@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.23.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.10.0
-	github.com/microsoft/kiota-abstractions-go v1.6.1
+	github.com/microsoft/kiota-abstractions-go v1.7.0
 	github.com/microsoft/kiota-http-go v1.4.4
 	github.com/microsoft/kiota-serialization-form-go v1.0.0
 	github.com/microsoft/kiota-serialization-json-go v1.0.8
