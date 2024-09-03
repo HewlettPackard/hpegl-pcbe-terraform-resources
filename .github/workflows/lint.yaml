@@ -1,7 +1,11 @@
 # Copyright 2024 Hewlett Packard Enterprise Development LP
 name: Lint
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 jobs:
   lint:
     runs-on: ubuntu-24.04
