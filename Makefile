@@ -2,6 +2,16 @@
 #
 # Note: this Makefile works with GNUMake and BSDMake
 #
+.PHONY: test docs
+
+PROVIDER_TF = \
+terraform { \\n \
+ required_providers { \\n \
+  hpegl = { \\n \
+   source = \"github.com/HewlettPackard/hpegl-pcbe-terraform-resources\" \\n \
+  } \\n \
+ } \\n \
+}
 
 build:
 	go build ./...
@@ -14,6 +24,14 @@ install:
 
 install-experimental:
 	go install -tags experimental  ./...
+
+docs:
+	echo -e ${PROVIDER_TF} > __docs.tf; \
+	tempfile=$$(mktemp); \
+	terraform providers schema -json | \
+	sed 's@github.com/hewlettpackard/hpegl-pcbe-terraform-resources@hpegl@g' > $$tempfile; \
+	tfplugindocs generate --providers-schema $$tempfile -provider-name hpegl;
+	rm __docs.tf
 
 test:
 	go test ./...
