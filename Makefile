@@ -26,12 +26,14 @@ install-experimental:
 	go install -tags experimental  ./...
 
 docs:
-	echo -e ${PROVIDER_TF} > __docs.tf; \
-	tempfile=$$(mktemp); \
-	terraform providers schema -json | \
-	sed 's@github.com/hewlettpackard/hpegl-pcbe-terraform-resources@hpegl@g' > $$tempfile; \
-	tfplugindocs generate --providers-schema $$tempfile -provider-name hpegl;
-	rm __docs.tf
+	printf "${PROVIDER_TF}" > __docs.tf; \
+	tfconfig=$$(mktemp); \
+	sed "s@__HOME__@${HOME}@g" test/.terraformrc > $$tfconfig; \
+	schemafile=$$(mktemp); \
+	env TF_CLI_CONFIG_FILE=$$tfconfig terraform providers schema -json | \
+	sed 's@github.com/hewlettpackard/hpegl-pcbe-terraform-resources@hpegl@g' > $$schemafile; \
+	rm __docs.tf; \
+	tfplugindocs generate --provider-name hpegl --providers-schema $$schemafile
 
 test:
 	go test ./...
@@ -42,9 +44,9 @@ testacc:
 
 testacc-simulation:
 	go install -tags experimental,simulation ./cmd/...
-	tempfile=$$(mktemp); \
-	sed "s@__HOME__@${HOME}@g" test/.terraformrc > $$tempfile; \
-	env TF_ACC=1 env TF_CLI_CONFIG_FILE=$$tempfile \
+	tfconfig=$$(mktemp); \
+	sed "s@__HOME__@${HOME}@g" test/.terraformrc > $$tfconfig; \
+	env TF_ACC=1 env TF_CLI_CONFIG_FILE=$$tfconfig \
 		go test -v -tags simulation ./test/...
 
 lint:
