@@ -49,6 +49,13 @@ testacc-simulation:
 	env TF_ACC=1 env TF_CLI_CONFIG_FILE=$$tfconfig \
 		go test -v -tags simulation ./test/...
 
+demo:
+	go install -tags experimental,simulation ./cmd/...
+	tfconfig=$$(mktemp); \
+	sed "s@__HOME__@${HOME}@g" test/.terraformrc > $$tfconfig; \
+	env TF_LOG=INFO env TF_CLI_CONFIG_FILE=$$tfconfig \
+		terraform -chdir=examples apply -auto-approve
+
 lint:
 	@golangci-lint --version
 	# Will use .golangci.yml
