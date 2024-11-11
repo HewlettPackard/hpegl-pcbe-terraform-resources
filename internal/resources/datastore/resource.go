@@ -350,33 +350,33 @@ func doCreate(
 	prb.SetName(&name)
 
 	// TODO: (API) Allow setting cipher when FF-29512 is fixed
-	cipher := datastores.NONE_DATASTORESPOSTREQUESTBODY_VOLUMEINFO_ENCRYPTION_CIPHER
-	enc := virtualization.NewV1beta1DatastoresPostRequestBody_volumeInfo_encryption()
+	// cipher := datastores.NONE_DATASTORESPOSTREQUESTBODY_VOLUMEINFO_ENCRYPTION_CIPHER
+	// enc := virtualization.NewV1beta1DatastoresPostRequestBody_volumeInfo_encryption()
 
 	// TODO: should be able to use enum for cipher (bug in sdk or spec processing?)
-	cipherMap := map[string]any{
-		"cipher": cipher.String(),
-	}
+	//cipherMap := map[string]any{
+	//	"cipher": cipher.String(),
+	//}
 
-	enc.SetAdditionalData(cipherMap)
-	qos := virtualization.NewV1beta1DatastoresPostRequestBody_volumeInfo_qos()
+	// enc.SetAdditionalData(cipherMap)
+	// qos := virtualization.NewV1beta1DatastoresPostRequestBody_volumeInfo_qos()
 	// TODO: (API) Allow setting iopsLimit when FF-29512 is fixed
-	var iopsLimit float64 = -1 // -1 implies no limit
-	qos.SetIopsLimit(&iopsLimit)
+	// var iopsLimit float64 = -1 // -1 implies no limit
+	// qos.SetIopsLimit(&iopsLimit)
 
 	// TODO: (API) Allow setting mbsLimit when FF-29512 is fixed
-	var mbpsLimit float64 = -1 // -1 implies no limit
-	qos.SetMbpsLimit(&mbpsLimit)
+	// var mbpsLimit float64 = -1 // -1 implies no limit
+	// qos.SetMbpsLimit(&mbpsLimit)
 
-	volInfo := virtualization.NewV1beta1DatastoresPostRequestBody_volumeInfo()
+	// volInfo := virtualization.NewV1beta1DatastoresPostRequestBody_volumeInfo()
 
 	// TODO: (API) Allow setting duplication when FF-29512 is fixed
-	False := false
-	volInfo.SetDeduplication(&False)
-	volInfo.SetEncryption(enc)
-	volInfo.SetQos(qos)
+	// False := false
+	// volInfo.SetDeduplication(&False)
+	// volInfo.SetEncryption(enc)
+	// volInfo.SetQos(qos)
 
-	prb.SetVolumeInfo(volInfo)
+	// prb.SetVolumeInfo(volInfo)
 
 	sizeInBytes := (*dataP).CapacityInBytes.ValueInt64()
 	prb.SetSizeInBytes(&sizeInBytes)
