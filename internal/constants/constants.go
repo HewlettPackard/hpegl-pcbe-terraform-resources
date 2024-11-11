@@ -3,7 +3,9 @@
 package constants
 
 const (
-	ProviderType  = "hpegl"
-	ProviderBlock = "pc"
-	NameFilter    = "name eq "
+	ProviderType         = "hpegl"
+	ProviderBlock        = "pc"
+	NameFilter           = "name eq "
+	HciClusterUUIDFilter = "hciClusterUuid eq "
+	AndFilter            = " and "
 )
