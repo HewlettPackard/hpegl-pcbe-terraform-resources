@@ -86,6 +86,12 @@ func getSystemByName(
 		Systems().
 		GetAsSystemsGetResponse(ctx, grc)
 
+	if err != nil {
+		tflog.Error(ctx, "failed to get system by name: "+name)
+
+		return nil, err
+	}
+
 	if systems.GetTotal() == nil {
 		msg := "total is nil"
 		tflog.Error(ctx, msg)

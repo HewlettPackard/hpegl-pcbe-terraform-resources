@@ -119,3 +119,44 @@ func TestAccSystemDataSourceMissingName(t *testing.T) {
 		},
 	})
 }
+
+func TestAccSystemDataSourceBadAuth(t *testing.T) {
+	providerConfigBadAuth := `
+terraform {
+  required_providers {
+    hpegl = {
+      source = "github.com/HewlettPackard/hpegl-pcbe-terraform-resources"
+    }
+  }
+}
+
+provider "hpegl" {
+        pc {
+                host            = "http://localhost:8080"
+                token           = "expired-token"
+
+                http_dump       = true
+                poll_interval   = 0.001
+                max_polls       = 10
+        }
+}
+`
+	config := providerConfigBadAuth + `
+	data "hpegl_pc_system" "test" {
+		name = "array-5305-grp"
+	}
+	`
+	// TODO: return more informative error message - including
+	// http response code (requires change to request handler)
+	expected := `text does not support structured data`
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      config,
+				ExpectError: regexp.MustCompile(expected),
+				PlanOnly:    true,
+			},
+		},
+	})
+}
