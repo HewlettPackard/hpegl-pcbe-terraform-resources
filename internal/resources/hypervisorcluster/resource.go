@@ -276,7 +276,7 @@ func doCreate(
 		Systems().
 		ById(systemID).
 		AddHypervisorCluster().
-		Post(context.Background(), prb, &prc)
+		Post(ctx, prb, &prc)
 	if err != nil {
 		(*diagsP).AddError(
 			"error creating hypervisorcluster",
