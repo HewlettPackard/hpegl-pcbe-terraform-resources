@@ -359,6 +359,8 @@ func (r *Resource) Create(
 	}
 
 	doCreate(ctx, *r.client, &data, &resp.Diagnostics)
+	// Write state to capture the id
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
