@@ -11,7 +11,7 @@ type V1beta1SystemsItemRequestBuilder struct {
 }
 // V1beta1SystemsItemRequestBuilderGetQueryParameters returns the system properties specified in the query parameters. Retrieving all of the properties for the system can take a long time because the amount of data is large. Use the  'select' query parameter to choose only the properties you want to retrieve.For example, to get details of the system's id, name and software information, use '?select=id,name,softwareInfo'
 type V1beta1SystemsItemRequestBuilderGetQueryParameters struct {
-    // Query parameter listing the properties of system information to fetch.Although Hypervisor Clusters collection (property hypervisorClusters) can be selected, selecting elements of the collection is not supported.Similarly, hypervisor clusters update status collection (property softwareInfo.hypervisorClusters) can be selected, but, selecting elements of the collection is not supported in the select query parameter.
+    // Query parameter listing the properties of system information to fetch.Although hypervisorClusters, computeClusters, systemVms and softwareInfo/hypervisorClusters can be selected, selecting elements of these collections is not supported.
     Select *string `uriparametername:"select"`
 }
 // V1beta1SystemsItemRequestBuilderGetRequestConfiguration configuration for the request such as headers, query parameters, and middleware options.
@@ -34,6 +34,16 @@ type V1beta1SystemsItemRequestBuilderPatchRequestConfiguration struct {
 // returns a *V1beta1SystemsItemAddHypervisorClusterRequestBuilder when successful
 func (m *V1beta1SystemsItemRequestBuilder) AddHypervisorCluster()(*V1beta1SystemsItemAddHypervisorClusterRequestBuilder) {
     return NewV1beta1SystemsItemAddHypervisorClusterRequestBuilderInternal(m.BaseRequestBuilder.PathParameters, m.BaseRequestBuilder.RequestAdapter)
+}
+// AddHypervisorServers the addHypervisorServers property
+// returns a *V1beta1SystemsItemAddHypervisorServersRequestBuilder when successful
+func (m *V1beta1SystemsItemRequestBuilder) AddHypervisorServers()(*V1beta1SystemsItemAddHypervisorServersRequestBuilder) {
+    return NewV1beta1SystemsItemAddHypervisorServersRequestBuilderInternal(m.BaseRequestBuilder.PathParameters, m.BaseRequestBuilder.RequestAdapter)
+}
+// AssignSecret the assignSecret property
+// returns a *V1beta1SystemsItemAssignSecretRequestBuilder when successful
+func (m *V1beta1SystemsItemRequestBuilder) AssignSecret()(*V1beta1SystemsItemAssignSecretRequestBuilder) {
+    return NewV1beta1SystemsItemAssignSecretRequestBuilderInternal(m.BaseRequestBuilder.PathParameters, m.BaseRequestBuilder.RequestAdapter)
 }
 // NewV1beta1SystemsItemRequestBuilderInternal instantiates a new V1beta1SystemsItemRequestBuilder and sets the default values.
 func NewV1beta1SystemsItemRequestBuilderInternal(pathParameters map[string]string, requestAdapter i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.RequestAdapter)(*V1beta1SystemsItemRequestBuilder) {
@@ -162,10 +172,25 @@ func (m *V1beta1SystemsItemRequestBuilder) PatchAsPatchResponse(ctx context.Cont
     }
     return res.(V1beta1SystemsItemPatchResponseable), nil
 }
+// RemoveHypervisorClusters the removeHypervisorClusters property
+// returns a *V1beta1SystemsItemRemoveHypervisorClustersRequestBuilder when successful
+func (m *V1beta1SystemsItemRequestBuilder) RemoveHypervisorClusters()(*V1beta1SystemsItemRemoveHypervisorClustersRequestBuilder) {
+    return NewV1beta1SystemsItemRemoveHypervisorClustersRequestBuilderInternal(m.BaseRequestBuilder.PathParameters, m.BaseRequestBuilder.RequestAdapter)
+}
+// RemoveHypervisorServers the removeHypervisorServers property
+// returns a *V1beta1SystemsItemRemoveHypervisorServersRequestBuilder when successful
+func (m *V1beta1SystemsItemRequestBuilder) RemoveHypervisorServers()(*V1beta1SystemsItemRemoveHypervisorServersRequestBuilder) {
+    return NewV1beta1SystemsItemRemoveHypervisorServersRequestBuilderInternal(m.BaseRequestBuilder.PathParameters, m.BaseRequestBuilder.RequestAdapter)
+}
 // Servers the servers property
 // returns a *V1beta1SystemsItemServersRequestBuilder when successful
 func (m *V1beta1SystemsItemRequestBuilder) Servers()(*V1beta1SystemsItemServersRequestBuilder) {
     return NewV1beta1SystemsItemServersRequestBuilderInternal(m.BaseRequestBuilder.PathParameters, m.BaseRequestBuilder.RequestAdapter)
+}
+// SoftwareDownload the softwareDownload property
+// returns a *V1beta1SystemsItemSoftwareDownloadRequestBuilder when successful
+func (m *V1beta1SystemsItemRequestBuilder) SoftwareDownload()(*V1beta1SystemsItemSoftwareDownloadRequestBuilder) {
+    return NewV1beta1SystemsItemSoftwareDownloadRequestBuilderInternal(m.BaseRequestBuilder.PathParameters, m.BaseRequestBuilder.RequestAdapter)
 }
 // SoftwarePrechecks the softwarePrechecks property
 // returns a *V1beta1SystemsItemSoftwarePrechecksRequestBuilder when successful

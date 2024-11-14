@@ -15,6 +15,8 @@ type V1beta1SystemsItemGetResponse_softwareInfo struct {
     hypervisorClusters []V1beta1SystemsItemGetResponse_softwareInfo_hypervisorClustersable
     // Date on which the last software update was performed on this system.
     lastUpdatedOn *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
+    // Software details of the Private Cloud AI. Applicable only for Private Cloud AI systems.
+    pcForAiSoftwareInfo V1beta1SystemsItemGetResponse_softwareInfo_pcForAiSoftwareInfoable
     // If a software update precheck is completed recently, time until which that precheck is valid for software update to be initiated.
     precheckValidUntil *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
 }
@@ -80,6 +82,16 @@ func (m *V1beta1SystemsItemGetResponse_softwareInfo) GetFieldDeserializers()(map
         }
         return nil
     }
+    res["pcForAiSoftwareInfo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateV1beta1SystemsItemGetResponse_softwareInfo_pcForAiSoftwareInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPcForAiSoftwareInfo(val.(V1beta1SystemsItemGetResponse_softwareInfo_pcForAiSoftwareInfoable))
+        }
+        return nil
+    }
     res["precheckValidUntil"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
         val, err := n.GetTimeValue()
         if err != nil {
@@ -101,6 +113,11 @@ func (m *V1beta1SystemsItemGetResponse_softwareInfo) GetHypervisorClusters()([]V
 // returns a *Time when successful
 func (m *V1beta1SystemsItemGetResponse_softwareInfo) GetLastUpdatedOn()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
     return m.lastUpdatedOn
+}
+// GetPcForAiSoftwareInfo gets the pcForAiSoftwareInfo property value. Software details of the Private Cloud AI. Applicable only for Private Cloud AI systems.
+// returns a V1beta1SystemsItemGetResponse_softwareInfo_pcForAiSoftwareInfoable when successful
+func (m *V1beta1SystemsItemGetResponse_softwareInfo) GetPcForAiSoftwareInfo()(V1beta1SystemsItemGetResponse_softwareInfo_pcForAiSoftwareInfoable) {
+    return m.pcForAiSoftwareInfo
 }
 // GetPrecheckValidUntil gets the precheckValidUntil property value. If a software update precheck is completed recently, time until which that precheck is valid for software update to be initiated.
 // returns a *Time when successful
@@ -129,6 +146,12 @@ func (m *V1beta1SystemsItemGetResponse_softwareInfo) Serialize(writer i878a80d23
     }
     {
         err := writer.WriteTimeValue("lastUpdatedOn", m.GetLastUpdatedOn())
+        if err != nil {
+            return err
+        }
+    }
+    {
+        err := writer.WriteObjectValue("pcForAiSoftwareInfo", m.GetPcForAiSoftwareInfo())
         if err != nil {
             return err
         }
@@ -163,6 +186,10 @@ func (m *V1beta1SystemsItemGetResponse_softwareInfo) SetHypervisorClusters(value
 func (m *V1beta1SystemsItemGetResponse_softwareInfo) SetLastUpdatedOn(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
     m.lastUpdatedOn = value
 }
+// SetPcForAiSoftwareInfo sets the pcForAiSoftwareInfo property value. Software details of the Private Cloud AI. Applicable only for Private Cloud AI systems.
+func (m *V1beta1SystemsItemGetResponse_softwareInfo) SetPcForAiSoftwareInfo(value V1beta1SystemsItemGetResponse_softwareInfo_pcForAiSoftwareInfoable)() {
+    m.pcForAiSoftwareInfo = value
+}
 // SetPrecheckValidUntil sets the precheckValidUntil property value. If a software update precheck is completed recently, time until which that precheck is valid for software update to be initiated.
 func (m *V1beta1SystemsItemGetResponse_softwareInfo) SetPrecheckValidUntil(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
     m.precheckValidUntil = value
@@ -173,9 +200,11 @@ type V1beta1SystemsItemGetResponse_softwareInfoable interface {
     GetCurrentUpdateStatus()(V1beta1SystemsItemGetResponse_softwareInfo_currentUpdateStatusable)
     GetHypervisorClusters()([]V1beta1SystemsItemGetResponse_softwareInfo_hypervisorClustersable)
     GetLastUpdatedOn()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetPcForAiSoftwareInfo()(V1beta1SystemsItemGetResponse_softwareInfo_pcForAiSoftwareInfoable)
     GetPrecheckValidUntil()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
     SetCurrentUpdateStatus(value V1beta1SystemsItemGetResponse_softwareInfo_currentUpdateStatusable)()
     SetHypervisorClusters(value []V1beta1SystemsItemGetResponse_softwareInfo_hypervisorClustersable)()
     SetLastUpdatedOn(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetPcForAiSoftwareInfo(value V1beta1SystemsItemGetResponse_softwareInfo_pcForAiSoftwareInfoable)()
     SetPrecheckValidUntil(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
 }

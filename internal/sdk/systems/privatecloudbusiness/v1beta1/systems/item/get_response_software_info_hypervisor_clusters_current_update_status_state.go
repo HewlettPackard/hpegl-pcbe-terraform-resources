@@ -1,5 +1,5 @@
 package item
-// Status of the software update:  * `UP_TO_DATE` - Already up to date  * `UPDATE_AVAILABLE` - One or more updates are available  * `PENDING` - Waiting for update operation (precheck or update) to begin  * `PRECHECK_IN_PROGRESS` - A software update precheck operation is in progress  * `PRECHECK_FAILED` - The previous software update precheck operation has failed  * `PRECHECK_COMPLETE` - The previous software update precheck operation has completed successfully  * `UPDATE_IN_PROGRESS` - A software update operation is in progress  * `UPDATE_COMPLETE` - The previous software update operation has completed successfully  * `UPDATE_FAILED` - The previous software update operation has failed  * `NOT_READY` - Not ready for update (e.g. when current version is not available, so no update paths exist)
+// Status of the software update:  * `UP_TO_DATE` - Already up to date  * `UPDATE_AVAILABLE` - One or more updates are available  * `PENDING` - Waiting for update operation (precheck or update) to begin  * `PRECHECK_IN_PROGRESS` - A software update precheck operation is in progress  * `PRECHECK_FAILED` - The previous software update precheck operation has failed  * `PRECHECK_COMPLETE` - The previous software update precheck operation has completed successfully  * `DOWNLOAD_IN_PROGRESS` - A software download operation is in progress  * `DOWNLOAD_FAILED` - The previous software download operation has failed  * `DOWNLOAD_COMPLETE` - The previous software download operation has completed successfully  * `UPDATE_IN_PROGRESS` - A software update operation is in progress  * `UPDATE_COMPLETE` - The previous software update operation has completed successfully  * `UPDATE_FAILED` - The previous software update operation has failed  * `NOT_READY` - Not ready for update (e.g. when current version is not available, so no update paths exist)
 type GetResponse_softwareInfo_hypervisorClusters_currentUpdateStatus_state int
 
 const (
@@ -9,6 +9,9 @@ const (
     PRECHECK_IN_PROGRESS_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
     PRECHECK_FAILED_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
     PRECHECK_COMPLETE_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
+    DOWNLOAD_IN_PROGRESS_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
+    DOWNLOAD_FAILED_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
+    DOWNLOAD_COMPLETE_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
     UPDATE_IN_PROGRESS_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
     UPDATE_COMPLETE_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
     UPDATE_FAILED_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
@@ -16,7 +19,7 @@ const (
 )
 
 func (i GetResponse_softwareInfo_hypervisorClusters_currentUpdateStatus_state) String() string {
-    return []string{"UP_TO_DATE", "UPDATE_AVAILABLE", "PENDING", "PRECHECK_IN_PROGRESS", "PRECHECK_FAILED", "PRECHECK_COMPLETE", "UPDATE_IN_PROGRESS", "UPDATE_COMPLETE", "UPDATE_FAILED", "NOT_READY"}[i]
+    return []string{"UP_TO_DATE", "UPDATE_AVAILABLE", "PENDING", "PRECHECK_IN_PROGRESS", "PRECHECK_FAILED", "PRECHECK_COMPLETE", "DOWNLOAD_IN_PROGRESS", "DOWNLOAD_FAILED", "DOWNLOAD_COMPLETE", "UPDATE_IN_PROGRESS", "UPDATE_COMPLETE", "UPDATE_FAILED", "NOT_READY"}[i]
 }
 func ParseGetResponse_softwareInfo_hypervisorClusters_currentUpdateStatus_state(v string) (any, error) {
     result := UP_TO_DATE_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
@@ -33,6 +36,12 @@ func ParseGetResponse_softwareInfo_hypervisorClusters_currentUpdateStatus_state(
             result = PRECHECK_FAILED_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
         case "PRECHECK_COMPLETE":
             result = PRECHECK_COMPLETE_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
+        case "DOWNLOAD_IN_PROGRESS":
+            result = DOWNLOAD_IN_PROGRESS_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
+        case "DOWNLOAD_FAILED":
+            result = DOWNLOAD_FAILED_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
+        case "DOWNLOAD_COMPLETE":
+            result = DOWNLOAD_COMPLETE_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
         case "UPDATE_IN_PROGRESS":
             result = UPDATE_IN_PROGRESS_GETRESPONSE_SOFTWAREINFO_HYPERVISORCLUSTERS_CURRENTUPDATESTATUS_STATE
         case "UPDATE_COMPLETE":

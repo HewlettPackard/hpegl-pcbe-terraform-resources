@@ -11,6 +11,8 @@ type V1beta1SystemsItemGetResponse struct {
     additionalData map[string]any
     // Associated Resource Information of system.
     associatedResourceCounts V1beta1SystemsItemGetResponse_associatedResourceCountsable
+    // List of compute clusters in the system.
+    computeClusters []V1beta1SystemsItemGetResponse_computeClustersable
     // System Compute Usage Information.
     computeUsage V1beta1SystemsItemGetResponse_computeUsageable
     // Status of last run of configuration analysis job.
@@ -23,7 +25,7 @@ type V1beta1SystemsItemGetResponse struct {
     generation *int64
     // Aspects of system health.Deduced health of storage subsystem based on associated arrays, controllers, disks,shelves, power supply, network interfaces, fan and temperature sensors.Aggregated health of servers based on health statuses of multiple servers in the system.Aggregated health of network based on health statues of multiple switches used in the system.Deduced/Aggregated overall health of the system based on storage, servers and networking health.
     health V1beta1SystemsItemGetResponse_healthable
-    // List of hypervisor clusters in the system with their software details.
+    // List of hypervisor clusters in the system. To be deprecated soon.
     hypervisorClusters []V1beta1SystemsItemGetResponse_hypervisorClustersable
     // An identifier for the resource, usually a UUID.
     id *string
@@ -70,6 +72,11 @@ func (m *V1beta1SystemsItemGetResponse) GetAdditionalData()(map[string]any) {
 func (m *V1beta1SystemsItemGetResponse) GetAssociatedResourceCounts()(V1beta1SystemsItemGetResponse_associatedResourceCountsable) {
     return m.associatedResourceCounts
 }
+// GetComputeClusters gets the computeClusters property value. List of compute clusters in the system.
+// returns a []V1beta1SystemsItemGetResponse_computeClustersable when successful
+func (m *V1beta1SystemsItemGetResponse) GetComputeClusters()([]V1beta1SystemsItemGetResponse_computeClustersable) {
+    return m.computeClusters
+}
 // GetComputeUsage gets the computeUsage property value. System Compute Usage Information.
 // returns a V1beta1SystemsItemGetResponse_computeUsageable when successful
 func (m *V1beta1SystemsItemGetResponse) GetComputeUsage()(V1beta1SystemsItemGetResponse_computeUsageable) {
@@ -101,6 +108,22 @@ func (m *V1beta1SystemsItemGetResponse) GetFieldDeserializers()(map[string]func(
         }
         if val != nil {
             m.SetAssociatedResourceCounts(val.(V1beta1SystemsItemGetResponse_associatedResourceCountsable))
+        }
+        return nil
+    }
+    res["computeClusters"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateV1beta1SystemsItemGetResponse_computeClustersFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]V1beta1SystemsItemGetResponse_computeClustersable, len(val))
+            for i, v := range val {
+                if v != nil {
+                    res[i] = v.(V1beta1SystemsItemGetResponse_computeClustersable)
+                }
+            }
+            m.SetComputeClusters(res)
         }
         return nil
     }
@@ -308,7 +331,7 @@ func (m *V1beta1SystemsItemGetResponse) GetGeneration()(*int64) {
 func (m *V1beta1SystemsItemGetResponse) GetHealth()(V1beta1SystemsItemGetResponse_healthable) {
     return m.health
 }
-// GetHypervisorClusters gets the hypervisorClusters property value. List of hypervisor clusters in the system with their software details.
+// GetHypervisorClusters gets the hypervisorClusters property value. List of hypervisor clusters in the system. To be deprecated soon.
 // returns a []V1beta1SystemsItemGetResponse_hypervisorClustersable when successful
 func (m *V1beta1SystemsItemGetResponse) GetHypervisorClusters()([]V1beta1SystemsItemGetResponse_hypervisorClustersable) {
     return m.hypervisorClusters
@@ -372,6 +395,18 @@ func (m *V1beta1SystemsItemGetResponse) GetUpdatedAt()(*i336074805fc853987abe6f7
 func (m *V1beta1SystemsItemGetResponse) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
     {
         err := writer.WriteObjectValue("associatedResourceCounts", m.GetAssociatedResourceCounts())
+        if err != nil {
+            return err
+        }
+    }
+    if m.GetComputeClusters() != nil {
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetComputeClusters()))
+        for i, v := range m.GetComputeClusters() {
+            if v != nil {
+                cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+            }
+        }
+        err := writer.WriteCollectionOfObjectValues("computeClusters", cast)
         if err != nil {
             return err
         }
@@ -476,6 +511,10 @@ func (m *V1beta1SystemsItemGetResponse) SetAdditionalData(value map[string]any)(
 func (m *V1beta1SystemsItemGetResponse) SetAssociatedResourceCounts(value V1beta1SystemsItemGetResponse_associatedResourceCountsable)() {
     m.associatedResourceCounts = value
 }
+// SetComputeClusters sets the computeClusters property value. List of compute clusters in the system.
+func (m *V1beta1SystemsItemGetResponse) SetComputeClusters(value []V1beta1SystemsItemGetResponse_computeClustersable)() {
+    m.computeClusters = value
+}
 // SetComputeUsage sets the computeUsage property value. System Compute Usage Information.
 func (m *V1beta1SystemsItemGetResponse) SetComputeUsage(value V1beta1SystemsItemGetResponse_computeUsageable)() {
     m.computeUsage = value
@@ -500,7 +539,7 @@ func (m *V1beta1SystemsItemGetResponse) SetGeneration(value *int64)() {
 func (m *V1beta1SystemsItemGetResponse) SetHealth(value V1beta1SystemsItemGetResponse_healthable)() {
     m.health = value
 }
-// SetHypervisorClusters sets the hypervisorClusters property value. List of hypervisor clusters in the system with their software details.
+// SetHypervisorClusters sets the hypervisorClusters property value. List of hypervisor clusters in the system. To be deprecated soon.
 func (m *V1beta1SystemsItemGetResponse) SetHypervisorClusters(value []V1beta1SystemsItemGetResponse_hypervisorClustersable)() {
     m.hypervisorClusters = value
 }
@@ -552,6 +591,7 @@ type V1beta1SystemsItemGetResponseable interface {
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
     GetAssociatedResourceCounts()(V1beta1SystemsItemGetResponse_associatedResourceCountsable)
+    GetComputeClusters()([]V1beta1SystemsItemGetResponse_computeClustersable)
     GetComputeUsage()(V1beta1SystemsItemGetResponse_computeUsageable)
     GetConfigAnalysisStatus()(V1beta1SystemsItemGetResponse_configAnalysisStatusable)
     GetCreatedAt()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
@@ -571,6 +611,7 @@ type V1beta1SystemsItemGetResponseable interface {
     GetTypeEscaped()(*string)
     GetUpdatedAt()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
     SetAssociatedResourceCounts(value V1beta1SystemsItemGetResponse_associatedResourceCountsable)()
+    SetComputeClusters(value []V1beta1SystemsItemGetResponse_computeClustersable)()
     SetComputeUsage(value V1beta1SystemsItemGetResponse_computeUsageable)()
     SetConfigAnalysisStatus(value V1beta1SystemsItemGetResponse_configAnalysisStatusable)()
     SetCreatedAt(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()

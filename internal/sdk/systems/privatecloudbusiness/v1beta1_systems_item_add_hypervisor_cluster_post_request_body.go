@@ -12,6 +12,8 @@ type V1beta1SystemsItemAddHypervisorClusterPostRequestBody struct {
     configureVds *bool
     // Name of the hypervisor cluster to be added.
     hypervisorClusterName *string
+    // Specifies if vSphere Distributed Switch (VDS) should be configured only on mgmt network
+    vdsMgmtOnly *bool
     // vSphere datacenter name where this hypervisor cluster is to be added.
     vsphereDatacenterName *string
 }
@@ -61,6 +63,16 @@ func (m *V1beta1SystemsItemAddHypervisorClusterPostRequestBody) GetFieldDeserial
         }
         return nil
     }
+    res["vdsMgmtOnly"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetVdsMgmtOnly(val)
+        }
+        return nil
+    }
     res["vsphereDatacenterName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
         val, err := n.GetStringValue()
         if err != nil {
@@ -78,6 +90,11 @@ func (m *V1beta1SystemsItemAddHypervisorClusterPostRequestBody) GetFieldDeserial
 func (m *V1beta1SystemsItemAddHypervisorClusterPostRequestBody) GetHypervisorClusterName()(*string) {
     return m.hypervisorClusterName
 }
+// GetVdsMgmtOnly gets the vdsMgmtOnly property value. Specifies if vSphere Distributed Switch (VDS) should be configured only on mgmt network
+// returns a *bool when successful
+func (m *V1beta1SystemsItemAddHypervisorClusterPostRequestBody) GetVdsMgmtOnly()(*bool) {
+    return m.vdsMgmtOnly
+}
 // GetVsphereDatacenterName gets the vsphereDatacenterName property value. vSphere datacenter name where this hypervisor cluster is to be added.
 // returns a *string when successful
 func (m *V1beta1SystemsItemAddHypervisorClusterPostRequestBody) GetVsphereDatacenterName()(*string) {
@@ -93,6 +110,12 @@ func (m *V1beta1SystemsItemAddHypervisorClusterPostRequestBody) Serialize(writer
     }
     {
         err := writer.WriteStringValue("hypervisorClusterName", m.GetHypervisorClusterName())
+        if err != nil {
+            return err
+        }
+    }
+    {
+        err := writer.WriteBoolValue("vdsMgmtOnly", m.GetVdsMgmtOnly())
         if err != nil {
             return err
         }
@@ -123,6 +146,10 @@ func (m *V1beta1SystemsItemAddHypervisorClusterPostRequestBody) SetConfigureVds(
 func (m *V1beta1SystemsItemAddHypervisorClusterPostRequestBody) SetHypervisorClusterName(value *string)() {
     m.hypervisorClusterName = value
 }
+// SetVdsMgmtOnly sets the vdsMgmtOnly property value. Specifies if vSphere Distributed Switch (VDS) should be configured only on mgmt network
+func (m *V1beta1SystemsItemAddHypervisorClusterPostRequestBody) SetVdsMgmtOnly(value *bool)() {
+    m.vdsMgmtOnly = value
+}
 // SetVsphereDatacenterName sets the vsphereDatacenterName property value. vSphere datacenter name where this hypervisor cluster is to be added.
 func (m *V1beta1SystemsItemAddHypervisorClusterPostRequestBody) SetVsphereDatacenterName(value *string)() {
     m.vsphereDatacenterName = value
@@ -132,8 +159,10 @@ type V1beta1SystemsItemAddHypervisorClusterPostRequestBodyable interface {
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
     GetConfigureVds()(*bool)
     GetHypervisorClusterName()(*string)
+    GetVdsMgmtOnly()(*bool)
     GetVsphereDatacenterName()(*string)
     SetConfigureVds(value *bool)()
     SetHypervisorClusterName(value *string)()
+    SetVdsMgmtOnly(value *bool)()
     SetVsphereDatacenterName(value *string)()
 }

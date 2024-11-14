@@ -9,6 +9,8 @@ import (
 type V1beta1SystemSoftwareCatalogsGetResponse_items struct {
     // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
     additionalData map[string]any
+    // Details of the AI Essentials software. Applicable only for Private Cloud AI systems.
+    aiEssentials V1beta1SystemSoftwareCatalogsGetResponse_items_aiEssentialsable
     // The createdAt property
     createdAt *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
     // The customer application identifier
@@ -31,7 +33,7 @@ type V1beta1SystemSoftwareCatalogsGetResponse_items struct {
     resourceUri *string
     // Details of the HPE Server Firmware.
     serverFirmware V1beta1SystemSoftwareCatalogsGetResponse_items_serverFirmwareable
-    // Details of the HPE Storage Connection Manager software.
+    // Details of the HPE Storage Connection Manager software. Applicable only for Alletra dHCI systems.
     storageConnectionManager V1beta1SystemSoftwareCatalogsGetResponse_items_storageConnectionManagerable
     // Details of the HPE Storage software.
     storageSoftware V1beta1SystemSoftwareCatalogsGetResponse_items_storageSoftwareable
@@ -61,6 +63,11 @@ func CreateV1beta1SystemSoftwareCatalogsGetResponse_itemsFromDiscriminatorValue(
 func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) GetAdditionalData()(map[string]any) {
     return m.additionalData
 }
+// GetAiEssentials gets the aiEssentials property value. Details of the AI Essentials software. Applicable only for Private Cloud AI systems.
+// returns a V1beta1SystemSoftwareCatalogsGetResponse_items_aiEssentialsable when successful
+func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) GetAiEssentials()(V1beta1SystemSoftwareCatalogsGetResponse_items_aiEssentialsable) {
+    return m.aiEssentials
+}
 // GetCreatedAt gets the createdAt property value. The createdAt property
 // returns a *Time when successful
 func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) GetCreatedAt()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
@@ -80,6 +87,16 @@ func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) GetEula()(*string) {
 // returns a map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error) when successful
 func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
+    res["aiEssentials"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateV1beta1SystemSoftwareCatalogsGetResponse_items_aiEssentialsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAiEssentials(val.(V1beta1SystemSoftwareCatalogsGetResponse_items_aiEssentialsable))
+        }
+        return nil
+    }
     res["createdAt"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
         val, err := n.GetTimeValue()
         if err != nil {
@@ -298,7 +315,7 @@ func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) GetResourceUri()(*strin
 func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) GetServerFirmware()(V1beta1SystemSoftwareCatalogsGetResponse_items_serverFirmwareable) {
     return m.serverFirmware
 }
-// GetStorageConnectionManager gets the storageConnectionManager property value. Details of the HPE Storage Connection Manager software.
+// GetStorageConnectionManager gets the storageConnectionManager property value. Details of the HPE Storage Connection Manager software. Applicable only for Alletra dHCI systems.
 // returns a V1beta1SystemSoftwareCatalogsGetResponse_items_storageConnectionManagerable when successful
 func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) GetStorageConnectionManager()(V1beta1SystemSoftwareCatalogsGetResponse_items_storageConnectionManagerable) {
     return m.storageConnectionManager
@@ -330,6 +347,12 @@ func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) GetVersion()(*string) {
 }
 // Serialize serializes information the current object
 func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
+    {
+        err := writer.WriteObjectValue("aiEssentials", m.GetAiEssentials())
+        if err != nil {
+            return err
+        }
+    }
     {
         err := writer.WriteTimeValue("createdAt", m.GetCreatedAt())
         if err != nil {
@@ -420,6 +443,10 @@ func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) Serialize(writer i878a8
 func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) SetAdditionalData(value map[string]any)() {
     m.additionalData = value
 }
+// SetAiEssentials sets the aiEssentials property value. Details of the AI Essentials software. Applicable only for Private Cloud AI systems.
+func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) SetAiEssentials(value V1beta1SystemSoftwareCatalogsGetResponse_items_aiEssentialsable)() {
+    m.aiEssentials = value
+}
 // SetCreatedAt sets the createdAt property value. The createdAt property
 func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) SetCreatedAt(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
     m.createdAt = value
@@ -464,7 +491,7 @@ func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) SetResourceUri(value *s
 func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) SetServerFirmware(value V1beta1SystemSoftwareCatalogsGetResponse_items_serverFirmwareable)() {
     m.serverFirmware = value
 }
-// SetStorageConnectionManager sets the storageConnectionManager property value. Details of the HPE Storage Connection Manager software.
+// SetStorageConnectionManager sets the storageConnectionManager property value. Details of the HPE Storage Connection Manager software. Applicable only for Alletra dHCI systems.
 func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) SetStorageConnectionManager(value V1beta1SystemSoftwareCatalogsGetResponse_items_storageConnectionManagerable)() {
     m.storageConnectionManager = value
 }
@@ -491,6 +518,7 @@ func (m *V1beta1SystemSoftwareCatalogsGetResponse_items) SetVersion(value *strin
 type V1beta1SystemSoftwareCatalogsGetResponse_itemsable interface {
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAiEssentials()(V1beta1SystemSoftwareCatalogsGetResponse_items_aiEssentialsable)
     GetCreatedAt()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
     GetCustomerId()(*string)
     GetEula()(*string)
@@ -508,6 +536,7 @@ type V1beta1SystemSoftwareCatalogsGetResponse_itemsable interface {
     GetTypeEscaped()(*string)
     GetUpdatedAt()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
     GetVersion()(*string)
+    SetAiEssentials(value V1beta1SystemSoftwareCatalogsGetResponse_items_aiEssentialsable)()
     SetCreatedAt(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
     SetCustomerId(value *string)()
     SetEula(value *string)()

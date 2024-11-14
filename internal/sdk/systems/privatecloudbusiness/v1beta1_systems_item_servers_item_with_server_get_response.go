@@ -9,15 +9,21 @@ import (
 type V1beta1SystemsItemServersItemWithServerGetResponse struct {
     // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
     additionalData map[string]any
+    // HPE Cloud module configuration.
+    cloudModuleConfig V1beta1SystemsItemServersItemWithServerGetResponse_cloudModuleConfigable
+    // Server Compute Usage Information.
+    computeUsage V1beta1SystemsItemServersItemWithServerGetResponse_computeUsageable
+    // The consumedBy property
+    consumedBy V1beta1SystemsItemServersItemWithServerGetResponse_consumedByable
     // The createdAt property
     createdAt *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
     // The customer application identifier
     customerId *string
     // A monotonically increasing value. This value updates when the resource is updated and can be used as a short way to determine if a resource has changed or which of two different copies of a resource is more up to date.
     generation *int64
-    // Server Health information
-    health V1beta1SystemsItemServersItemWithServerGetResponse_healthable
-    // id, URI to reference the hypervisor host.
+    // Gpus in the server.
+    gpus []V1beta1SystemsItemServersItemWithServerGetResponse_gpusable
+    // id, URI to reference the hypervisor host. Soon to be deprecated.
     hypervisorHost V1beta1SystemsItemServersItemWithServerGetResponse_hypervisorHostable
     // Secret information
     hypervisorHostRootUserPasswordSecret V1beta1SystemsItemServersItemWithServerGetResponse_hypervisorHostRootUserPasswordSecretable
@@ -27,14 +33,18 @@ type V1beta1SystemsItemServersItemWithServerGetResponse struct {
     iloAdminUserPasswordSecret V1beta1SystemsItemServersItemWithServerGetResponse_iloAdminUserPasswordSecretable
     // firmware version of iLO in the server.
     iloFirmwareVersion *string
-    // ILO Network Information.
+    // ILO network information.
     iloNetworkInfo V1beta1SystemsItemServersItemWithServerGetResponse_iloNetworkInfoable
     // state of the iLO in the server.
     iloState *string
     // status of the iLO in the server.
     iloStatus *string
+    // iLO user name and authentication credential secret. Property iloAdminUserPasswordSecret will be deprecated.Use this property instead.
+    iloUserCredential V1beta1SystemsItemServersItemWithServerGetResponse_iloUserCredentialable
     // iLO LED indication.
     indicatorLedStatus *string
+    // Information about link local IP addresses.
+    linkLocalInfo V1beta1SystemsItemServersItemWithServerGetResponse_linkLocalInfoable
     // Memory of the server.
     memoryGib *string
     // The model of the server.
@@ -45,6 +55,10 @@ type V1beta1SystemsItemServersItemWithServerGetResponse struct {
     ncmVersion *string
     // An identifier of the on prem agent for the server.
     onPremAgentId *string
+    // Information about the OS on the server.
+    operatingSystemInfo V1beta1SystemsItemServersItemWithServerGetResponse_operatingSystemInfoable
+    // Operating system user name and authentication credential secret. Property hypervisorHostRootUserPasswordSecret will be deprecated.Use this property instead.
+    osUserCredential V1beta1SystemsItemServersItemWithServerGetResponse_osUserCredentialable
     // Number of processors in the server.
     processorCount *string
     // Model of the processors in the server.
@@ -55,7 +69,7 @@ type V1beta1SystemsItemServersItemWithServerGetResponse struct {
     serialNumber *string
     // List of server network interfaces
     serverNetworkInterfaces []V1beta1SystemsItemServersItemWithServerGetResponse_serverNetworkInterfacesable
-    // Unique Identifier of the system, usually a UUID.
+    // Unique identifier of the system, usually a UUID.
     systemId *string
     // The type of resource.
     typeEscaped *string
@@ -79,6 +93,21 @@ func CreateV1beta1SystemsItemServersItemWithServerGetResponseFromDiscriminatorVa
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetAdditionalData()(map[string]any) {
     return m.additionalData
 }
+// GetCloudModuleConfig gets the cloudModuleConfig property value. HPE Cloud module configuration.
+// returns a V1beta1SystemsItemServersItemWithServerGetResponse_cloudModuleConfigable when successful
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetCloudModuleConfig()(V1beta1SystemsItemServersItemWithServerGetResponse_cloudModuleConfigable) {
+    return m.cloudModuleConfig
+}
+// GetComputeUsage gets the computeUsage property value. Server Compute Usage Information.
+// returns a V1beta1SystemsItemServersItemWithServerGetResponse_computeUsageable when successful
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetComputeUsage()(V1beta1SystemsItemServersItemWithServerGetResponse_computeUsageable) {
+    return m.computeUsage
+}
+// GetConsumedBy gets the consumedBy property value. The consumedBy property
+// returns a V1beta1SystemsItemServersItemWithServerGetResponse_consumedByable when successful
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetConsumedBy()(V1beta1SystemsItemServersItemWithServerGetResponse_consumedByable) {
+    return m.consumedBy
+}
 // GetCreatedAt gets the createdAt property value. The createdAt property
 // returns a *Time when successful
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetCreatedAt()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
@@ -93,6 +122,36 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetCustomerId()(*st
 // returns a map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error) when successful
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
+    res["cloudModuleConfig"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateV1beta1SystemsItemServersItemWithServerGetResponse_cloudModuleConfigFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCloudModuleConfig(val.(V1beta1SystemsItemServersItemWithServerGetResponse_cloudModuleConfigable))
+        }
+        return nil
+    }
+    res["computeUsage"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateV1beta1SystemsItemServersItemWithServerGetResponse_computeUsageFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetComputeUsage(val.(V1beta1SystemsItemServersItemWithServerGetResponse_computeUsageable))
+        }
+        return nil
+    }
+    res["consumedBy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateV1beta1SystemsItemServersItemWithServerGetResponse_consumedByFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetConsumedBy(val.(V1beta1SystemsItemServersItemWithServerGetResponse_consumedByable))
+        }
+        return nil
+    }
     res["createdAt"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
         val, err := n.GetTimeValue()
         if err != nil {
@@ -123,13 +182,19 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetFieldDeserialize
         }
         return nil
     }
-    res["health"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
-        val, err := n.GetObjectValue(CreateV1beta1SystemsItemServersItemWithServerGetResponse_healthFromDiscriminatorValue)
+    res["gpus"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateV1beta1SystemsItemServersItemWithServerGetResponse_gpusFromDiscriminatorValue)
         if err != nil {
             return err
         }
         if val != nil {
-            m.SetHealth(val.(V1beta1SystemsItemServersItemWithServerGetResponse_healthable))
+            res := make([]V1beta1SystemsItemServersItemWithServerGetResponse_gpusable, len(val))
+            for i, v := range val {
+                if v != nil {
+                    res[i] = v.(V1beta1SystemsItemServersItemWithServerGetResponse_gpusable)
+                }
+            }
+            m.SetGpus(res)
         }
         return nil
     }
@@ -213,6 +278,16 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetFieldDeserialize
         }
         return nil
     }
+    res["iloUserCredential"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateV1beta1SystemsItemServersItemWithServerGetResponse_iloUserCredentialFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIloUserCredential(val.(V1beta1SystemsItemServersItemWithServerGetResponse_iloUserCredentialable))
+        }
+        return nil
+    }
     res["indicatorLedStatus"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
         val, err := n.GetStringValue()
         if err != nil {
@@ -220,6 +295,16 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetFieldDeserialize
         }
         if val != nil {
             m.SetIndicatorLedStatus(val)
+        }
+        return nil
+    }
+    res["linkLocalInfo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateV1beta1SystemsItemServersItemWithServerGetResponse_linkLocalInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLinkLocalInfo(val.(V1beta1SystemsItemServersItemWithServerGetResponse_linkLocalInfoable))
         }
         return nil
     }
@@ -270,6 +355,26 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetFieldDeserialize
         }
         if val != nil {
             m.SetOnPremAgentId(val)
+        }
+        return nil
+    }
+    res["operatingSystemInfo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateV1beta1SystemsItemServersItemWithServerGetResponse_operatingSystemInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOperatingSystemInfo(val.(V1beta1SystemsItemServersItemWithServerGetResponse_operatingSystemInfoable))
+        }
+        return nil
+    }
+    res["osUserCredential"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateV1beta1SystemsItemServersItemWithServerGetResponse_osUserCredentialFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOsUserCredential(val.(V1beta1SystemsItemServersItemWithServerGetResponse_osUserCredentialable))
         }
         return nil
     }
@@ -366,12 +471,12 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetFieldDeserialize
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetGeneration()(*int64) {
     return m.generation
 }
-// GetHealth gets the health property value. Server Health information
-// returns a V1beta1SystemsItemServersItemWithServerGetResponse_healthable when successful
-func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetHealth()(V1beta1SystemsItemServersItemWithServerGetResponse_healthable) {
-    return m.health
+// GetGpus gets the gpus property value. Gpus in the server.
+// returns a []V1beta1SystemsItemServersItemWithServerGetResponse_gpusable when successful
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetGpus()([]V1beta1SystemsItemServersItemWithServerGetResponse_gpusable) {
+    return m.gpus
 }
-// GetHypervisorHost gets the hypervisorHost property value. id, URI to reference the hypervisor host.
+// GetHypervisorHost gets the hypervisorHost property value. id, URI to reference the hypervisor host. Soon to be deprecated.
 // returns a V1beta1SystemsItemServersItemWithServerGetResponse_hypervisorHostable when successful
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetHypervisorHost()(V1beta1SystemsItemServersItemWithServerGetResponse_hypervisorHostable) {
     return m.hypervisorHost
@@ -396,7 +501,7 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetIloAdminUserPass
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetIloFirmwareVersion()(*string) {
     return m.iloFirmwareVersion
 }
-// GetIloNetworkInfo gets the iloNetworkInfo property value. ILO Network Information.
+// GetIloNetworkInfo gets the iloNetworkInfo property value. ILO network information.
 // returns a V1beta1SystemsItemServersItemWithServerGetResponse_iloNetworkInfoable when successful
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetIloNetworkInfo()(V1beta1SystemsItemServersItemWithServerGetResponse_iloNetworkInfoable) {
     return m.iloNetworkInfo
@@ -411,10 +516,20 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetIloState()(*stri
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetIloStatus()(*string) {
     return m.iloStatus
 }
+// GetIloUserCredential gets the iloUserCredential property value. iLO user name and authentication credential secret. Property iloAdminUserPasswordSecret will be deprecated.Use this property instead.
+// returns a V1beta1SystemsItemServersItemWithServerGetResponse_iloUserCredentialable when successful
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetIloUserCredential()(V1beta1SystemsItemServersItemWithServerGetResponse_iloUserCredentialable) {
+    return m.iloUserCredential
+}
 // GetIndicatorLedStatus gets the indicatorLedStatus property value. iLO LED indication.
 // returns a *string when successful
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetIndicatorLedStatus()(*string) {
     return m.indicatorLedStatus
+}
+// GetLinkLocalInfo gets the linkLocalInfo property value. Information about link local IP addresses.
+// returns a V1beta1SystemsItemServersItemWithServerGetResponse_linkLocalInfoable when successful
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetLinkLocalInfo()(V1beta1SystemsItemServersItemWithServerGetResponse_linkLocalInfoable) {
+    return m.linkLocalInfo
 }
 // GetMemoryGib gets the memoryGib property value. Memory of the server.
 // returns a *string when successful
@@ -441,6 +556,16 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetNcmVersion()(*st
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetOnPremAgentId()(*string) {
     return m.onPremAgentId
 }
+// GetOperatingSystemInfo gets the operatingSystemInfo property value. Information about the OS on the server.
+// returns a V1beta1SystemsItemServersItemWithServerGetResponse_operatingSystemInfoable when successful
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetOperatingSystemInfo()(V1beta1SystemsItemServersItemWithServerGetResponse_operatingSystemInfoable) {
+    return m.operatingSystemInfo
+}
+// GetOsUserCredential gets the osUserCredential property value. Operating system user name and authentication credential secret. Property hypervisorHostRootUserPasswordSecret will be deprecated.Use this property instead.
+// returns a V1beta1SystemsItemServersItemWithServerGetResponse_osUserCredentialable when successful
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetOsUserCredential()(V1beta1SystemsItemServersItemWithServerGetResponse_osUserCredentialable) {
+    return m.osUserCredential
+}
 // GetProcessorCount gets the processorCount property value. Number of processors in the server.
 // returns a *string when successful
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetProcessorCount()(*string) {
@@ -466,7 +591,7 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetSerialNumber()(*
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetServerNetworkInterfaces()([]V1beta1SystemsItemServersItemWithServerGetResponse_serverNetworkInterfacesable) {
     return m.serverNetworkInterfaces
 }
-// GetSystemId gets the systemId property value. Unique Identifier of the system, usually a UUID.
+// GetSystemId gets the systemId property value. Unique identifier of the system, usually a UUID.
 // returns a *string when successful
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetSystemId()(*string) {
     return m.systemId
@@ -484,13 +609,37 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) GetUpdatedAt()(*i33
 // Serialize serializes information the current object
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
     {
-        err := writer.WriteTimeValue("createdAt", m.GetCreatedAt())
+        err := writer.WriteObjectValue("cloudModuleConfig", m.GetCloudModuleConfig())
         if err != nil {
             return err
         }
     }
     {
-        err := writer.WriteObjectValue("health", m.GetHealth())
+        err := writer.WriteObjectValue("computeUsage", m.GetComputeUsage())
+        if err != nil {
+            return err
+        }
+    }
+    {
+        err := writer.WriteObjectValue("consumedBy", m.GetConsumedBy())
+        if err != nil {
+            return err
+        }
+    }
+    {
+        err := writer.WriteTimeValue("createdAt", m.GetCreatedAt())
+        if err != nil {
+            return err
+        }
+    }
+    if m.GetGpus() != nil {
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetGpus()))
+        for i, v := range m.GetGpus() {
+            if v != nil {
+                cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+            }
+        }
+        err := writer.WriteCollectionOfObjectValues("gpus", cast)
         if err != nil {
             return err
         }
@@ -538,7 +687,19 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) Serialize(writer i8
         }
     }
     {
+        err := writer.WriteObjectValue("iloUserCredential", m.GetIloUserCredential())
+        if err != nil {
+            return err
+        }
+    }
+    {
         err := writer.WriteStringValue("indicatorLedStatus", m.GetIndicatorLedStatus())
+        if err != nil {
+            return err
+        }
+    }
+    {
+        err := writer.WriteObjectValue("linkLocalInfo", m.GetLinkLocalInfo())
         if err != nil {
             return err
         }
@@ -563,6 +724,18 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) Serialize(writer i8
     }
     {
         err := writer.WriteStringValue("ncmVersion", m.GetNcmVersion())
+        if err != nil {
+            return err
+        }
+    }
+    {
+        err := writer.WriteObjectValue("operatingSystemInfo", m.GetOperatingSystemInfo())
+        if err != nil {
+            return err
+        }
+    }
+    {
+        err := writer.WriteObjectValue("osUserCredential", m.GetOsUserCredential())
         if err != nil {
             return err
         }
@@ -621,6 +794,18 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) Serialize(writer i8
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetAdditionalData(value map[string]any)() {
     m.additionalData = value
 }
+// SetCloudModuleConfig sets the cloudModuleConfig property value. HPE Cloud module configuration.
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetCloudModuleConfig(value V1beta1SystemsItemServersItemWithServerGetResponse_cloudModuleConfigable)() {
+    m.cloudModuleConfig = value
+}
+// SetComputeUsage sets the computeUsage property value. Server Compute Usage Information.
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetComputeUsage(value V1beta1SystemsItemServersItemWithServerGetResponse_computeUsageable)() {
+    m.computeUsage = value
+}
+// SetConsumedBy sets the consumedBy property value. The consumedBy property
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetConsumedBy(value V1beta1SystemsItemServersItemWithServerGetResponse_consumedByable)() {
+    m.consumedBy = value
+}
 // SetCreatedAt sets the createdAt property value. The createdAt property
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetCreatedAt(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
     m.createdAt = value
@@ -633,11 +818,11 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetCustomerId(value
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetGeneration(value *int64)() {
     m.generation = value
 }
-// SetHealth sets the health property value. Server Health information
-func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetHealth(value V1beta1SystemsItemServersItemWithServerGetResponse_healthable)() {
-    m.health = value
+// SetGpus sets the gpus property value. Gpus in the server.
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetGpus(value []V1beta1SystemsItemServersItemWithServerGetResponse_gpusable)() {
+    m.gpus = value
 }
-// SetHypervisorHost sets the hypervisorHost property value. id, URI to reference the hypervisor host.
+// SetHypervisorHost sets the hypervisorHost property value. id, URI to reference the hypervisor host. Soon to be deprecated.
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetHypervisorHost(value V1beta1SystemsItemServersItemWithServerGetResponse_hypervisorHostable)() {
     m.hypervisorHost = value
 }
@@ -657,7 +842,7 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetIloAdminUserPass
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetIloFirmwareVersion(value *string)() {
     m.iloFirmwareVersion = value
 }
-// SetIloNetworkInfo sets the iloNetworkInfo property value. ILO Network Information.
+// SetIloNetworkInfo sets the iloNetworkInfo property value. ILO network information.
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetIloNetworkInfo(value V1beta1SystemsItemServersItemWithServerGetResponse_iloNetworkInfoable)() {
     m.iloNetworkInfo = value
 }
@@ -669,9 +854,17 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetIloState(value *
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetIloStatus(value *string)() {
     m.iloStatus = value
 }
+// SetIloUserCredential sets the iloUserCredential property value. iLO user name and authentication credential secret. Property iloAdminUserPasswordSecret will be deprecated.Use this property instead.
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetIloUserCredential(value V1beta1SystemsItemServersItemWithServerGetResponse_iloUserCredentialable)() {
+    m.iloUserCredential = value
+}
 // SetIndicatorLedStatus sets the indicatorLedStatus property value. iLO LED indication.
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetIndicatorLedStatus(value *string)() {
     m.indicatorLedStatus = value
+}
+// SetLinkLocalInfo sets the linkLocalInfo property value. Information about link local IP addresses.
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetLinkLocalInfo(value V1beta1SystemsItemServersItemWithServerGetResponse_linkLocalInfoable)() {
+    m.linkLocalInfo = value
 }
 // SetMemoryGib sets the memoryGib property value. Memory of the server.
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetMemoryGib(value *string)() {
@@ -693,6 +886,14 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetNcmVersion(value
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetOnPremAgentId(value *string)() {
     m.onPremAgentId = value
 }
+// SetOperatingSystemInfo sets the operatingSystemInfo property value. Information about the OS on the server.
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetOperatingSystemInfo(value V1beta1SystemsItemServersItemWithServerGetResponse_operatingSystemInfoable)() {
+    m.operatingSystemInfo = value
+}
+// SetOsUserCredential sets the osUserCredential property value. Operating system user name and authentication credential secret. Property hypervisorHostRootUserPasswordSecret will be deprecated.Use this property instead.
+func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetOsUserCredential(value V1beta1SystemsItemServersItemWithServerGetResponse_osUserCredentialable)() {
+    m.osUserCredential = value
+}
 // SetProcessorCount sets the processorCount property value. Number of processors in the server.
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetProcessorCount(value *string)() {
     m.processorCount = value
@@ -713,7 +914,7 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetSerialNumber(val
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetServerNetworkInterfaces(value []V1beta1SystemsItemServersItemWithServerGetResponse_serverNetworkInterfacesable)() {
     m.serverNetworkInterfaces = value
 }
-// SetSystemId sets the systemId property value. Unique Identifier of the system, usually a UUID.
+// SetSystemId sets the systemId property value. Unique identifier of the system, usually a UUID.
 func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetSystemId(value *string)() {
     m.systemId = value
 }
@@ -728,10 +929,13 @@ func (m *V1beta1SystemsItemServersItemWithServerGetResponse) SetUpdatedAt(value 
 type V1beta1SystemsItemServersItemWithServerGetResponseable interface {
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetCloudModuleConfig()(V1beta1SystemsItemServersItemWithServerGetResponse_cloudModuleConfigable)
+    GetComputeUsage()(V1beta1SystemsItemServersItemWithServerGetResponse_computeUsageable)
+    GetConsumedBy()(V1beta1SystemsItemServersItemWithServerGetResponse_consumedByable)
     GetCreatedAt()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
     GetCustomerId()(*string)
     GetGeneration()(*int64)
-    GetHealth()(V1beta1SystemsItemServersItemWithServerGetResponse_healthable)
+    GetGpus()([]V1beta1SystemsItemServersItemWithServerGetResponse_gpusable)
     GetHypervisorHost()(V1beta1SystemsItemServersItemWithServerGetResponse_hypervisorHostable)
     GetHypervisorHostRootUserPasswordSecret()(V1beta1SystemsItemServersItemWithServerGetResponse_hypervisorHostRootUserPasswordSecretable)
     GetId()(*string)
@@ -740,12 +944,16 @@ type V1beta1SystemsItemServersItemWithServerGetResponseable interface {
     GetIloNetworkInfo()(V1beta1SystemsItemServersItemWithServerGetResponse_iloNetworkInfoable)
     GetIloState()(*string)
     GetIloStatus()(*string)
+    GetIloUserCredential()(V1beta1SystemsItemServersItemWithServerGetResponse_iloUserCredentialable)
     GetIndicatorLedStatus()(*string)
+    GetLinkLocalInfo()(V1beta1SystemsItemServersItemWithServerGetResponse_linkLocalInfoable)
     GetMemoryGib()(*string)
     GetModel()(*string)
     GetName()(*string)
     GetNcmVersion()(*string)
     GetOnPremAgentId()(*string)
+    GetOperatingSystemInfo()(V1beta1SystemsItemServersItemWithServerGetResponse_operatingSystemInfoable)
+    GetOsUserCredential()(V1beta1SystemsItemServersItemWithServerGetResponse_osUserCredentialable)
     GetProcessorCount()(*string)
     GetProcessorModel()(*string)
     GetResourceUri()(*string)
@@ -754,10 +962,13 @@ type V1beta1SystemsItemServersItemWithServerGetResponseable interface {
     GetSystemId()(*string)
     GetTypeEscaped()(*string)
     GetUpdatedAt()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    SetCloudModuleConfig(value V1beta1SystemsItemServersItemWithServerGetResponse_cloudModuleConfigable)()
+    SetComputeUsage(value V1beta1SystemsItemServersItemWithServerGetResponse_computeUsageable)()
+    SetConsumedBy(value V1beta1SystemsItemServersItemWithServerGetResponse_consumedByable)()
     SetCreatedAt(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
     SetCustomerId(value *string)()
     SetGeneration(value *int64)()
-    SetHealth(value V1beta1SystemsItemServersItemWithServerGetResponse_healthable)()
+    SetGpus(value []V1beta1SystemsItemServersItemWithServerGetResponse_gpusable)()
     SetHypervisorHost(value V1beta1SystemsItemServersItemWithServerGetResponse_hypervisorHostable)()
     SetHypervisorHostRootUserPasswordSecret(value V1beta1SystemsItemServersItemWithServerGetResponse_hypervisorHostRootUserPasswordSecretable)()
     SetId(value *string)()
@@ -766,12 +977,16 @@ type V1beta1SystemsItemServersItemWithServerGetResponseable interface {
     SetIloNetworkInfo(value V1beta1SystemsItemServersItemWithServerGetResponse_iloNetworkInfoable)()
     SetIloState(value *string)()
     SetIloStatus(value *string)()
+    SetIloUserCredential(value V1beta1SystemsItemServersItemWithServerGetResponse_iloUserCredentialable)()
     SetIndicatorLedStatus(value *string)()
+    SetLinkLocalInfo(value V1beta1SystemsItemServersItemWithServerGetResponse_linkLocalInfoable)()
     SetMemoryGib(value *string)()
     SetModel(value *string)()
     SetName(value *string)()
     SetNcmVersion(value *string)()
     SetOnPremAgentId(value *string)()
+    SetOperatingSystemInfo(value V1beta1SystemsItemServersItemWithServerGetResponse_operatingSystemInfoable)()
+    SetOsUserCredential(value V1beta1SystemsItemServersItemWithServerGetResponse_osUserCredentialable)()
     SetProcessorCount(value *string)()
     SetProcessorModel(value *string)()
     SetResourceUri(value *string)()
