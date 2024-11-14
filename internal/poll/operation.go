@@ -10,13 +10,13 @@ import (
 )
 
 // AsyncOperation polls an asynchronous operation until it completes.
-// It returns the URI of the source resource of the operation.
+// It returns the response of the async operation.
 func AsyncOperation(
 	ctx context.Context,
 	client client.PCBeClient,
 	OperationID string,
 	diagsP *diag.Diagnostics,
-) *string {
+) dataservices.V1beta1AsyncOperationsItemAsyncOperationsGetResponseable {
 	maxPolls := int(client.Config.MaxPolls)
 	pollWaitTime := time.Duration(client.Config.PollInterval) * time.Second
 
@@ -35,7 +35,6 @@ func AsyncOperation(
 		V1beta1AsyncOperationsAsyncOperationsItemRequestBuilderGetRequestConfiguration{}
 
 	for count := 1; ; count++ {
-
 		opResp, err = asyncClient.DataServices().
 			V1beta1().
 			AsyncOperations().
@@ -51,10 +50,9 @@ func AsyncOperation(
 		}
 
 		if opResp == nil {
-			msg := "nil op response"
 			(*diagsP).AddError(
 				"error polling async operation "+OperationID,
-				msg,
+				"nil op response",
 			)
 
 			return nil
@@ -62,10 +60,9 @@ func AsyncOperation(
 
 		opRespState := opResp.GetState()
 		if opRespState == nil {
-			msg := "operation has nil state"
 			(*diagsP).AddError(
 				"error polling async operation "+OperationID,
-				msg,
+				"operation has nil state",
 			)
 
 			return nil
@@ -73,11 +70,9 @@ func AsyncOperation(
 
 		// TODO: (API) Use enum not string for state when FF-28181 is fixed
 		if *opRespState == "FAILED" {
-			msg := "operation state FAILED"
-
 			(*diagsP).AddError(
 				"error polling async operation "+OperationID,
-				msg,
+				"operation state FAILED",
 			)
 
 			return nil
@@ -89,10 +84,9 @@ func AsyncOperation(
 		}
 
 		if count == maxPolls {
-			msg := "max polls exceeded"
 			(*diagsP).AddError(
 				"error polling async operation "+OperationID,
-				msg,
+				"max polls exceeded",
 			)
 
 			return nil
@@ -101,5 +95,5 @@ func AsyncOperation(
 		time.Sleep(pollWaitTime)
 	}
 
-	return opResp.GetSourceResourceUri()
+	return opResp
 }

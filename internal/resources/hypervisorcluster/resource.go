@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/constants"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/poll"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/systems/privatecloudbusiness"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt/virtualization"
@@ -289,12 +290,12 @@ func doCreate(
 	location := sysHeaderOpts.GetResponseHeaders().Get("Location")[0]
 	sysHeaderOpts.ResponseHeaders.Clear()
 	operationID := path.Base(location)
-	sourceURI := poll.AsyncOperation(ctx, client, operationID, diagsP)
+	opResp := poll.AsyncOperation(ctx, client, operationID, diagsP)
 	if (*diagsP).HasError() {
 		return
 	}
 
-	if sourceURI == nil {
+	if opResp == nil {
 		(*diagsP).AddError(
 			"error creating hypervisorcluster",
 			"async operation did not return a source uri",
@@ -303,8 +304,45 @@ func doCreate(
 		return
 	}
 
-	// Set id in state as early as possible
-	hypervisorClusterID := path.Base(*sourceURI)
+	if len(opResp.GetAssociatedResources()) != 1 {
+		(*diagsP).AddError(
+			"error creating hypervisorcluster",
+			fmt.Sprintf("could not parse async operation. "+
+				"Unexpected length of associatedResources (%d)",
+				len(opResp.GetAssociatedResources()),
+			),
+		)
+
+		return
+
+	}
+
+	if opResp.GetAssociatedResources()[0].GetTypeEscaped() == nil {
+		(*diagsP).AddError(
+			"error creating hypervisorcluster",
+			fmt.Sprintf("could not parse async operation. "+
+				"associatedResources is nil",
+			),
+		)
+
+		return
+	}
+
+	if *(opResp.GetAssociatedResources()[0].GetTypeEscaped()) !=
+		constants.TaskHypervisorCluster {
+		(*diagsP).AddError(
+			"error creating hypervisorcluster",
+			fmt.Sprintf("could not parse async operation. "+
+				"Unexpected type for associatedResources (%s)",
+				*(opResp.GetAssociatedResources()[0].GetTypeEscaped()),
+			),
+		)
+
+		return
+	}
+
+	// Allow setting id in state as early as possible
+	hypervisorClusterID := path.Base(*(opResp.GetAssociatedResources()[0].GetResourceUri()))
 	(*dataP).Id = types.StringValue(hypervisorClusterID)
 }
 
