@@ -8,17 +8,17 @@ import (
 type V1beta1SystemsItemPatchResponse_storageSystem struct {
     // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
     additionalData map[string]any
-    // Compression ratio of the storage system.
+    // Compression ratio of the storage system. Not available if storage system type is "Alletra MP File".
     compressionRatio *float64
-    // Deduplication ratio of the storage system.
+    // Deduplication ratio of the storage system. Not available if storage system type is "Alletra MP File".
     dedupeRatio *float64
-    // Name of the storage system group leader. Not available for storage system type "Alletra MP Block". Only available if storage system type is "Alletra".
+    // Name of the storage system group leader. Only available if storage system type is "Alletra".
     groupLeaderName *string
-    // Serial number of the storage system group leader. Not available for storage system type "Alletra MP Block". Only available if storage system type is "Alletra".
+    // Serial number of the storage system group leader. Only available if storage system type is "Alletra".
     groupLeaderSerialNumber *string
-    // Name of the storage system group. Not available for storage system type "Alletra MP Block". Only available if storage system type is "Alletra".
+    // Name of the storage system group. Only available if storage system type is "Alletra".
     groupName *string
-    // State of the storage system group. Not available for storage system type "Alletra MP Block". Only available if storage system type is "Alletra".
+    // State of the storage system group. Only available if storage system type is "Alletra".
     groupState *string
     // Storage system identifier, usually a UUID.
     id *string
@@ -54,12 +54,12 @@ func CreateV1beta1SystemsItemPatchResponse_storageSystemFromDiscriminatorValue(p
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) GetAdditionalData()(map[string]any) {
     return m.additionalData
 }
-// GetCompressionRatio gets the compressionRatio property value. Compression ratio of the storage system.
+// GetCompressionRatio gets the compressionRatio property value. Compression ratio of the storage system. Not available if storage system type is "Alletra MP File".
 // returns a *float64 when successful
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) GetCompressionRatio()(*float64) {
     return m.compressionRatio
 }
-// GetDedupeRatio gets the dedupeRatio property value. Deduplication ratio of the storage system.
+// GetDedupeRatio gets the dedupeRatio property value. Deduplication ratio of the storage system. Not available if storage system type is "Alletra MP File".
 // returns a *float64 when successful
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) GetDedupeRatio()(*float64) {
     return m.dedupeRatio
@@ -210,22 +210,22 @@ func (m *V1beta1SystemsItemPatchResponse_storageSystem) GetFieldDeserializers()(
     }
     return res
 }
-// GetGroupLeaderName gets the groupLeaderName property value. Name of the storage system group leader. Not available for storage system type "Alletra MP Block". Only available if storage system type is "Alletra".
+// GetGroupLeaderName gets the groupLeaderName property value. Name of the storage system group leader. Only available if storage system type is "Alletra".
 // returns a *string when successful
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) GetGroupLeaderName()(*string) {
     return m.groupLeaderName
 }
-// GetGroupLeaderSerialNumber gets the groupLeaderSerialNumber property value. Serial number of the storage system group leader. Not available for storage system type "Alletra MP Block". Only available if storage system type is "Alletra".
+// GetGroupLeaderSerialNumber gets the groupLeaderSerialNumber property value. Serial number of the storage system group leader. Only available if storage system type is "Alletra".
 // returns a *string when successful
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) GetGroupLeaderSerialNumber()(*string) {
     return m.groupLeaderSerialNumber
 }
-// GetGroupName gets the groupName property value. Name of the storage system group. Not available for storage system type "Alletra MP Block". Only available if storage system type is "Alletra".
+// GetGroupName gets the groupName property value. Name of the storage system group. Only available if storage system type is "Alletra".
 // returns a *string when successful
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) GetGroupName()(*string) {
     return m.groupName
 }
-// GetGroupState gets the groupState property value. State of the storage system group. Not available for storage system type "Alletra MP Block". Only available if storage system type is "Alletra".
+// GetGroupState gets the groupState property value. State of the storage system group. Only available if storage system type is "Alletra".
 // returns a *string when successful
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) GetGroupState()(*string) {
     return m.groupState
@@ -368,27 +368,27 @@ func (m *V1beta1SystemsItemPatchResponse_storageSystem) Serialize(writer i878a80
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) SetAdditionalData(value map[string]any)() {
     m.additionalData = value
 }
-// SetCompressionRatio sets the compressionRatio property value. Compression ratio of the storage system.
+// SetCompressionRatio sets the compressionRatio property value. Compression ratio of the storage system. Not available if storage system type is "Alletra MP File".
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) SetCompressionRatio(value *float64)() {
     m.compressionRatio = value
 }
-// SetDedupeRatio sets the dedupeRatio property value. Deduplication ratio of the storage system.
+// SetDedupeRatio sets the dedupeRatio property value. Deduplication ratio of the storage system. Not available if storage system type is "Alletra MP File".
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) SetDedupeRatio(value *float64)() {
     m.dedupeRatio = value
 }
-// SetGroupLeaderName sets the groupLeaderName property value. Name of the storage system group leader. Not available for storage system type "Alletra MP Block". Only available if storage system type is "Alletra".
+// SetGroupLeaderName sets the groupLeaderName property value. Name of the storage system group leader. Only available if storage system type is "Alletra".
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) SetGroupLeaderName(value *string)() {
     m.groupLeaderName = value
 }
-// SetGroupLeaderSerialNumber sets the groupLeaderSerialNumber property value. Serial number of the storage system group leader. Not available for storage system type "Alletra MP Block". Only available if storage system type is "Alletra".
+// SetGroupLeaderSerialNumber sets the groupLeaderSerialNumber property value. Serial number of the storage system group leader. Only available if storage system type is "Alletra".
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) SetGroupLeaderSerialNumber(value *string)() {
     m.groupLeaderSerialNumber = value
 }
-// SetGroupName sets the groupName property value. Name of the storage system group. Not available for storage system type "Alletra MP Block". Only available if storage system type is "Alletra".
+// SetGroupName sets the groupName property value. Name of the storage system group. Only available if storage system type is "Alletra".
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) SetGroupName(value *string)() {
     m.groupName = value
 }
-// SetGroupState sets the groupState property value. State of the storage system group. Not available for storage system type "Alletra MP Block". Only available if storage system type is "Alletra".
+// SetGroupState sets the groupState property value. State of the storage system group. Only available if storage system type is "Alletra".
 func (m *V1beta1SystemsItemPatchResponse_storageSystem) SetGroupState(value *string)() {
     m.groupState = value
 }

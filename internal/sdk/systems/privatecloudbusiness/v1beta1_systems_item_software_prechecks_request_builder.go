@@ -29,7 +29,7 @@ func NewV1beta1SystemsItemSoftwarePrechecksRequestBuilder(rawUrl string, request
     urlParams["request-raw-url"] = rawUrl
     return NewV1beta1SystemsItemSoftwarePrechecksRequestBuilderInternal(urlParams, requestAdapter)
 }
-// Post initiate a set of software update prechecks on the specified system and hypervisor clusters in it using the specified software catalog version.This operation validates whether the software on system and its hypervisor clusters are ready to be updated to the target software catalog version.
+// Post initiate a set of software update prechecks on the specified system and hypervisor clusters in it using the specified software catalog version.This operation validates whether the software on system and its constituent clusters are ready to be updated to the target software catalog version.
 // Deprecated: This method is obsolete. Use PostAsSoftwarePrechecksPostResponse instead.
 // returns a V1beta1SystemsItemSoftwarePrechecksResponseable when successful
 // returns a V1beta1SystemsItemSoftwarePrechecks400Error error when the service returns a 400 status code
@@ -60,7 +60,7 @@ func (m *V1beta1SystemsItemSoftwarePrechecksRequestBuilder) Post(ctx context.Con
     }
     return res.(V1beta1SystemsItemSoftwarePrechecksResponseable), nil
 }
-// PostAsSoftwarePrechecksPostResponse initiate a set of software update prechecks on the specified system and hypervisor clusters in it using the specified software catalog version.This operation validates whether the software on system and its hypervisor clusters are ready to be updated to the target software catalog version.
+// PostAsSoftwarePrechecksPostResponse initiate a set of software update prechecks on the specified system and hypervisor clusters in it using the specified software catalog version.This operation validates whether the software on system and its constituent clusters are ready to be updated to the target software catalog version.
 // returns a V1beta1SystemsItemSoftwarePrechecksPostResponseable when successful
 // returns a V1beta1SystemsItemSoftwarePrechecks400Error error when the service returns a 400 status code
 // returns a V1beta1SystemsItemSoftwarePrechecks401Error error when the service returns a 401 status code
@@ -90,7 +90,7 @@ func (m *V1beta1SystemsItemSoftwarePrechecksRequestBuilder) PostAsSoftwarePreche
     }
     return res.(V1beta1SystemsItemSoftwarePrechecksPostResponseable), nil
 }
-// ToPostRequestInformation initiate a set of software update prechecks on the specified system and hypervisor clusters in it using the specified software catalog version.This operation validates whether the software on system and its hypervisor clusters are ready to be updated to the target software catalog version.
+// ToPostRequestInformation initiate a set of software update prechecks on the specified system and hypervisor clusters in it using the specified software catalog version.This operation validates whether the software on system and its constituent clusters are ready to be updated to the target software catalog version.
 // returns a *RequestInformation when successful
 func (m *V1beta1SystemsItemSoftwarePrechecksRequestBuilder) ToPostRequestInformation(ctx context.Context, body V1beta1SystemsItemSoftwarePrechecksPostRequestBodyable, requestConfiguration *V1beta1SystemsItemSoftwarePrechecksRequestBuilderPostRequestConfiguration)(*i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.RequestInformation, error) {
     requestInfo := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.NewRequestInformationWithMethodAndUrlTemplateAndPathParameters(i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.POST, m.BaseRequestBuilder.UrlTemplate, m.BaseRequestBuilder.PathParameters)

@@ -11,15 +11,15 @@ type V1beta1SystemsItemServersRequestBuilder struct {
 }
 // V1beta1SystemsItemServersRequestBuilderGetQueryParameters get server information by system id Returns details about the servers for the specified system id. Retrieving all of the properties for all servers in a system can take a long time because the amount of data is large. Use the  'select' query parameter to choose only the properties you want to retrieve.For example, to get the server id, name, serial number and hypervisor host, use ?select=id,name,serialNumber,hypervisorHost
 type V1beta1SystemsItemServersRequestBuilderGetQueryParameters struct {
-    // The expression to filter responses.
+    // The expression to filter responses. Using gpus list property in filter is unsupported.
     Filter *string `uriparametername:"filter"`
     // Use limit in conjunction with offset for paging, e.g.: offset=30&&limit=10. Limit is the maximum number of items to include in the response.
     Limit *int32 `uriparametername:"limit"`
     // Use offset in conjunction with limit for paging, e.g.: offset=30&&limit=10. Offset is the number of items from the beginning of the result set to the first item included in the response.
     Offset *int32 `uriparametername:"offset"`
-    // Query parameter listing the properties of Server information to fetch.
+    // Query parameter listing the properties of Server information to fetch. Although gpus list property can be selected, its elements can't be selected.
     Select *string `uriparametername:"select"`
-    // A comma separated list of properties to sort by, followed by a directionindicator ("asc" or "desc"). If no direction indicator is specified thedefault order is ascending.
+    // A comma separated list of properties to sort by, followed by a order indicator ("asc" or "desc"). If no order indicator is specified thedefault order is ascending. List property gpus can't be used to sort.
     Sort *string `uriparametername:"sort"`
 }
 // V1beta1SystemsItemServersRequestBuilderGetRequestConfiguration configuration for the request such as headers, query parameters, and middleware options.

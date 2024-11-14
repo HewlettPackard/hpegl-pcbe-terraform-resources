@@ -4,7 +4,7 @@ import (
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// V1beta1SystemsItemServersGetResponse_items_iloNetworkInfo iLO Network Information.
+// V1beta1SystemsItemServersGetResponse_items_iloNetworkInfo iLO network information.
 type V1beta1SystemsItemServersGetResponse_items_iloNetworkInfo struct {
     // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
     additionalData map[string]any
@@ -12,7 +12,7 @@ type V1beta1SystemsItemServersGetResponse_items_iloNetworkInfo struct {
     gateway *string
     // iLO Hostname
     iloHostname *string
-    // iLO Management IP address
+    // iLO management IP address
     iloIp *string
     // The network property
     network *string
@@ -120,7 +120,7 @@ func (m *V1beta1SystemsItemServersGetResponse_items_iloNetworkInfo) GetGateway()
 func (m *V1beta1SystemsItemServersGetResponse_items_iloNetworkInfo) GetIloHostname()(*string) {
     return m.iloHostname
 }
-// GetIloIp gets the iloIp property value. iLO Management IP address
+// GetIloIp gets the iloIp property value. iLO management IP address
 // returns a *string when successful
 func (m *V1beta1SystemsItemServersGetResponse_items_iloNetworkInfo) GetIloIp()(*string) {
     return m.iloIp
@@ -204,7 +204,7 @@ func (m *V1beta1SystemsItemServersGetResponse_items_iloNetworkInfo) SetGateway(v
 func (m *V1beta1SystemsItemServersGetResponse_items_iloNetworkInfo) SetIloHostname(value *string)() {
     m.iloHostname = value
 }
-// SetIloIp sets the iloIp property value. iLO Management IP address
+// SetIloIp sets the iloIp property value. iLO management IP address
 func (m *V1beta1SystemsItemServersGetResponse_items_iloNetworkInfo) SetIloIp(value *string)() {
     m.iloIp = value
 }

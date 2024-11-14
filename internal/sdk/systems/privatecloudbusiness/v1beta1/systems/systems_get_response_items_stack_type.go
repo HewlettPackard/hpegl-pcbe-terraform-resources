@@ -4,17 +4,23 @@ type SystemsGetResponse_items_stackType int
 
 const (
     DHCI_SYSTEMSGETRESPONSE_ITEMS_STACKTYPE SystemsGetResponse_items_stackType = iota
+    DHCI_GENAI_SYSTEMSGETRESPONSE_ITEMS_STACKTYPE
+    PCE_SYSTEMSGETRESPONSE_ITEMS_STACKTYPE
     SIMPLIVITY_SYSTEMSGETRESPONSE_ITEMS_STACKTYPE
 )
 
 func (i SystemsGetResponse_items_stackType) String() string {
-    return []string{"DHCI", "SIMPLIVITY"}[i]
+    return []string{"DHCI", "DHCI_GENAI", "PCE", "SIMPLIVITY"}[i]
 }
 func ParseSystemsGetResponse_items_stackType(v string) (any, error) {
     result := DHCI_SYSTEMSGETRESPONSE_ITEMS_STACKTYPE
     switch v {
         case "DHCI":
             result = DHCI_SYSTEMSGETRESPONSE_ITEMS_STACKTYPE
+        case "DHCI_GENAI":
+            result = DHCI_GENAI_SYSTEMSGETRESPONSE_ITEMS_STACKTYPE
+        case "PCE":
+            result = PCE_SYSTEMSGETRESPONSE_ITEMS_STACKTYPE
         case "SIMPLIVITY":
             result = SIMPLIVITY_SYSTEMSGETRESPONSE_ITEMS_STACKTYPE
         default:

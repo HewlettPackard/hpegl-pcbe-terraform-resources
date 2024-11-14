@@ -11,7 +11,7 @@ type V1beta1SystemsItemServersWithServerItemRequestBuilder struct {
 }
 // V1beta1SystemsItemServersWithServerItemRequestBuilderGetQueryParameters get server details by system id and server id Returns information about a specific server on a specific system. Retrieving all of the properties for a server can take a long time because the amount of data is large. Use the select query parameter to choose only the properties you want to retrieve. For example, to get details of the server's id, name, serial number and hypervisor host, use ?select=id,name,serialNumber,hypervisorHost
 type V1beta1SystemsItemServersWithServerItemRequestBuilderGetQueryParameters struct {
-    // Query parameter listing the properties of Server information to fetch.
+    // Query parameter listing the properties of Server information to fetch. Although gpus list property can be selected, its elements can't be selected.
     Select *string `uriparametername:"select"`
 }
 // V1beta1SystemsItemServersWithServerItemRequestBuilderGetRequestConfiguration configuration for the request such as headers, query parameters, and middleware options.

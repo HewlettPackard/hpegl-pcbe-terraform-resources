@@ -11,15 +11,15 @@ type V1beta1SystemsRequestBuilder struct {
 }
 // V1beta1SystemsRequestBuilderGetQueryParameters returns the systems and their properties defined by the query parameters. Retrieving all of the properties for the system can take a long time because the amount of data is large. Use the ‘select’ query parameter to choose only the properties you want to retrieve for a system. For example, to get details of the id, name and software information for each system, use ‘?select=id,name,softwareInfo’
 type V1beta1SystemsRequestBuilderGetQueryParameters struct {
-    // The expression to filter responses.This API doesn't support filtering based on hypervisorClusters collection property, softwareInfo.hypervisorClusters and systemVms collection property.Request with filter based on the above mentioned properties will be treated as a Bad Request with 400 Error.
+    // The expression to filter responses.This API doesn't support filter by computerClusters, hypervisorClusters, softwareInfo/hypervisorClusters and systemVms collection properties.
     Filter *string `uriparametername:"filter"`
     // Use limit in conjunction with offset for paging, e.g.: offset=30&&limit=10. Limit is the maximum number of items to include in the response.
     Limit *int32 `uriparametername:"limit"`
     // Use offset in conjunction with limit for paging, e.g.: offset=30&&limit=10. Offset is the number of items from the beginning of the result set to the first item included in the response.
     Offset *int32 `uriparametername:"offset"`
-    // Query parameter listing the properties of system information to fetch.Although Hypervisor Clusters collection (property hypervisorClusters) can be selected, selecting elements of the collection is not supported.Similarly, hypervisor clusters update status collection (property softwareInfo.hypervisorClusters) can be selected, but, selecting elements of the collection is not supported in the select query parameter.Although systemVms collection can be selected, selecting elements of the collection is not supported.
+    // Query parameter listing the properties of system information to fetch.Although hypervisorClusters, computeClusters, systemVms and softwareInfo/hypervisorClusters can be selected, selecting elements of these collections is not supported.
     Select *string `uriparametername:"select"`
-    // A comma separated list of properties to sort by, followed by a directionindicator ("asc" or "desc"). If no direction indicator is specified thedefault order is ascending.This API doesn't support sorting based on hypervisorClusters collection property, softwareInfo.hypervisorClusters collection property and systemVms collection property.Request with sort based on the above mentioned properties will be treated as a Bad Request with 400 Error.
+    // A comma separated list of properties to sort by, followed by a order indicator ("asc" or "desc"). Default order is ascending.This API doesn't support sorting by computerClusters, hypervisorClusters, softwareInfo/hypervisorClusters and systemVms collection properties.
     Sort *string `uriparametername:"sort"`
 }
 // V1beta1SystemsRequestBuilderGetRequestConfiguration configuration for the request such as headers, query parameters, and middleware options.
