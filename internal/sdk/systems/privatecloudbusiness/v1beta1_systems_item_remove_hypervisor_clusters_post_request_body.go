@@ -58,7 +58,7 @@ func (m *V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody) GetHyperviso
 // Serialize serializes information the current object
 func (m *V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
     if m.GetHypervisorClusterIds() != nil {
-        err := writer.WriteCollectionOfStringValues("hypervisorClusterIds", m.GetHypervisorClusterIds())
+        err := writer.WriteCollectionOfStringValues("hypervisor_cluster_ids", m.GetHypervisorClusterIds())
         if err != nil {
             return err
         }
