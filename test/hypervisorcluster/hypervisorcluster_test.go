@@ -61,6 +61,17 @@ func checkUUIDAttr(resource string, attr string) func(*terraform.State) error {
 	}
 }
 
+func testAccCheckResourceDestroyed(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		// Check if the resource is in the state
+		if rs, ok := s.RootModule().Resources[resourceName]; ok {
+			return fmt.Errorf("Resource %s still exists: %v", resourceName, rs.Primary.ID)
+		}
+
+		return nil
+	}
+}
+
 func TestAccHypervisorclusterResource(t *testing.T) {
 	config1 := providerConfig + `
 	resource "hpegl_pc_hypervisor_cluster" "test" {
@@ -102,13 +113,19 @@ func TestAccHypervisorclusterResource(t *testing.T) {
 	}
 
 	checkFn := resource.ComposeAggregateTestCheckFunc(checks...)
-
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: config1,
 				Check:  checkFn,
+			},
+			{
+				// Remove hypervisor cluster from config to test delete
+				Config: providerConfig,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckResourceDestroyed("hpegl_pc_hypervisor_cluster.test"),
+				),
 			},
 		},
 	})

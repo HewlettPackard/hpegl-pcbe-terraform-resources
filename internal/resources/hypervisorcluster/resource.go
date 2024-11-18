@@ -407,8 +407,54 @@ func (r *Resource) Delete(
 	req resource.DeleteRequest,
 	resp *resource.DeleteResponse,
 ) {
-	// TODO: (API) Implement delete hypervisorcluster when API supports it
-	tflog.Error(ctx, "delete hypervisorcluster is not implemented")
+	var data HypervisorclusterModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id := data.Id.ValueString()
+	client := *r.client
+	sysClient, sysHeaderOpts, err := client.NewSysClient(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"error deleting hypervisorcluster "+id,
+			"unexpected error creating client: "+err.Error(),
+		)
+
+		return
+	}
+
+	prb := privatecloudbusiness.
+		NewV1beta1SystemsItemRemoveHypervisorClustersPostRequestBody()
+	prb.SetHypervisorClusterIds([]string{id})
+	prc := privatecloudbusiness.
+		V1beta1SystemsItemRemoveHypervisorClustersRequestBuilderPostRequestConfiguration{}
+
+	_, err = sysClient.PrivateCloudBusiness().
+		V1beta1().
+		Systems().
+		ById(data.HciClusterUuid.ValueString()).
+		RemoveHypervisorClusters().Post(ctx, prb, &prc)
+
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"error deleting hypervisorcluster "+id,
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	location := sysHeaderOpts.GetResponseHeaders().Get("Location")[0]
+	sysHeaderOpts.ResponseHeaders.Clear()
+	operationID := path.Base(location)
+	// If resp.Diagnostics is not empty, then Delete is
+	// considered to have failed; the hypervisor cluster entry
+	// in the tfstate file will not be removed
+	poll.AsyncOperation(ctx, client, operationID, &resp.Diagnostics)
 }
 
 func (r *Resource) ImportState(
