@@ -8,6 +8,9 @@ import (
 	"github.com/h2non/gock"
 )
 
+//go:embed fixtures/datastores/create/post-request.json
+var dsPostRequest string
+
 //go:embed fixtures/datastores/create/hypervisorclustersfiltered.json
 var hcFilter string
 
@@ -49,6 +52,8 @@ func datastoreCreate() {
 
 	gock.New("http://localhost").
 		Post("/virtualization/v1beta1/datastore").
+		MatchType("json").
+		BodyString(dsPostRequest).
 		Reply(202).
 		SetHeader("Location", "/data-services/v1beta1/async-operations/"+taskID)
 
