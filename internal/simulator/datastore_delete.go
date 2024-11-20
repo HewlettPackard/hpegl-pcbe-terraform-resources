@@ -29,6 +29,7 @@ func datastoreDelete() {
 
 	gock.New("http://localhost").
 		Delete("/virtualization/v1beta1/datastores/"+datastoreID).
+		BodyString("").
 		Reply(202).
 		SetHeader("Location", "/data-services/v1beta1/async-operations/"+taskID).
 		SetHeader("Content-Type", "application/json").
