@@ -3,10 +3,12 @@
 package constants
 
 const (
-	ProviderType          = "hpegl"
-	ProviderBlock         = "pc"
-	NameFilter            = "name eq "
-	HciClusterUUIDFilter  = "hciClusterUuid eq "
-	AndFilter             = " and "
+	ProviderType         = "hpegl"
+	ProviderBlock        = "pc"
+	NameFilter           = "name eq "
+	HciClusterUUIDFilter = "hciClusterUuid eq "
+	AndFilter            = " and "
+
 	TaskHypervisorCluster = "hypervisor-cluster" // task's "associatedResources" string
+	TaskDatastore         = "datastore"          // task's "associatedResources" string
 )

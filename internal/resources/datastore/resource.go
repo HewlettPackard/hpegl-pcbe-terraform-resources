@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/async"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/constants"
-	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/poll"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt/virtualization"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt/virtualization/v1beta1/datastores"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -63,53 +63,6 @@ func (r *Resource) Configure(
 	}
 
 	r.client = req.ProviderData.(*client.PCBeClient)
-}
-
-func createNameFilter(name string) string {
-	return constants.NameFilter + name
-}
-
-// TODO: (API) remove this workaround when FF-28659 is fixed
-func getDataStoreID(
-	ctx context.Context,
-	client client.PCBeClient,
-	name string,
-) (string, error) {
-	virtClient, _, err := client.NewVirtClient(ctx)
-	if err != nil {
-		msg := "error getting datastore ID"
-		tflog.Error(ctx, msg)
-
-		return "", errors.New(msg)
-	}
-	grc := virtualization.V1beta1DatastoresRequestBuilderGetRequestConfiguration{}
-	qp := virtualization.V1beta1DatastoresRequestBuilderGetQueryParameters{}
-	filter := createNameFilter(name)
-	qp.Filter = &filter
-	grc.QueryParameters = &qp
-
-	datastores, err := virtClient.Virtualization().
-		V1beta1().
-		Datastores().
-		GetAsDatastoresGetResponse(ctx, &grc)
-
-	if datastores.GetTotal() == nil {
-		msg := "'total' field is nil"
-		tflog.Error(ctx, msg)
-
-		return "", errors.New(msg)
-	}
-	total := *(datastores.GetTotal())
-	if total != 1 {
-		msg := fmt.Sprintf("required 1 datastore with name %s, got %d", name, total)
-		tflog.Error(ctx, msg)
-
-		return "", errors.New(msg)
-	}
-
-	id := datastores.GetItems()[0].GetId()
-
-	return *id, err
 }
 
 func doRead(
@@ -490,24 +443,33 @@ func doCreate(
 	virtHeaderOpts.ResponseHeaders.Clear()
 
 	operationID := path.Base(location)
-	poll.AsyncOperation(ctx, client, operationID, diagsP)
-	if (*diagsP).HasError() {
-		return
-	}
-
-	datastoreID, err := getDataStoreID(
-		ctx, client,
-		(*dataP).Name.ValueString(),
+	asyncOperation := async.New(
+		ctx,
+		client,
+		operationID,
+		constants.TaskDatastore,
 	)
+	err = asyncOperation.Poll()
 	if err != nil {
 		(*diagsP).AddError(
 			"error creating datastore",
-			"failed to get datastore: "+err.Error(),
+			"unexpected poll error: "+err.Error(),
 		)
 
 		return
 	}
 
+	uri, err := asyncOperation.GetSourceResourceURI()
+	if err != nil {
+		(*diagsP).AddError(
+			"error creating datastore",
+			"failed to get sourceResourceUri: "+err.Error(),
+		)
+
+		return
+	}
+
+	datastoreID := path.Base(uri)
 	(*dataP).Id = types.StringValue(datastoreID)
 }
 
@@ -613,9 +575,14 @@ func (r *Resource) Delete(
 	location := virtHeaderOpts.GetResponseHeaders().Get("Location")[0]
 	virtHeaderOpts.ResponseHeaders.Clear()
 	operationID := path.Base(location)
-	poll.AsyncOperation(ctx, client, operationID, &resp.Diagnostics)
+	asyncOperation := async.New(ctx, client, operationID, constants.TaskDatastore)
+	err = asyncOperation.Poll()
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"error deleting datastore",
+			"delete failed with: "+err.Error(),
+		)
 
-	if resp.Diagnostics.HasError() {
 		return
 	}
 }

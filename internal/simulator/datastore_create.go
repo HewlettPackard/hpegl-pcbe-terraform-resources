@@ -26,16 +26,12 @@ var dsAsync4 string
 //go:embed fixtures/datastores/create/async5.json
 var dsAsync5 string
 
-//go:embed fixtures/datastores/create/filter.json
-var dsFilter string
-
 //go:embed fixtures/datastores/create/get.json
 var dsGet string
 
 func datastoreCreate() {
 	taskID := "be55685c-f84f-4ad5-a3d1-2d7692ed47b1"
 	datastoreID := "698de955-87b5-5fe6-b683-78c3948beede"
-	datastoreName := "mclaren-ds19"
 	hypervisorClusterID := "126fd201-9e6e-5e31-9ffb-a766265b1fd3" // nolint goconst
 	clusterName := "5305-CL"
 
@@ -81,13 +77,6 @@ func datastoreCreate() {
 		Reply(200).
 		SetHeader("Content-Type", "application/json").
 		BodyString(dsAsync5)
-
-	gock.New("http://localhost").
-		Get("/virtualization/v1beta1/datastores").
-		MatchParam("filter", "name eq "+datastoreName).
-		Reply(200).
-		SetHeader("Content-Type", "application/json").
-		BodyString(dsFilter)
 
 	gock.New("http://localhost").
 		Get("/virtualization/v1beta1/datastores/"+datastoreID).

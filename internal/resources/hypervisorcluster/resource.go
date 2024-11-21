@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/async"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/constants"
-	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/poll"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/systems/privatecloudbusiness"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt/virtualization"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -290,8 +290,13 @@ func doCreate(
 	location := sysHeaderOpts.GetResponseHeaders().Get("Location")[0]
 	sysHeaderOpts.ResponseHeaders.Clear()
 	operationID := path.Base(location)
-	task := poll.New(ctx, client, operationID, constants.TaskHypervisorCluster)
-	err = task.Poll()
+	asyncOperation := async.New(
+		ctx,
+		client,
+		operationID,
+		constants.TaskHypervisorCluster,
+	)
+	err = asyncOperation.Poll()
 	if err != nil {
 		(*diagsP).AddError(
 			"error creating hypervisorcluster",
@@ -301,7 +306,7 @@ func doCreate(
 		return
 	}
 
-	uri, err := task.GetAssociatedResourceUri()
+	uri, err := asyncOperation.GetAssociatedResourceURI()
 	if err != nil {
 		(*diagsP).AddError(
 			"error creating hypervisorcluster",
@@ -420,10 +425,25 @@ func (r *Resource) Delete(
 	location := sysHeaderOpts.GetResponseHeaders().Get("Location")[0]
 	sysHeaderOpts.ResponseHeaders.Clear()
 	operationID := path.Base(location)
+
 	// If resp.Diagnostics is not empty, then Delete is
 	// considered to have failed; the hypervisor cluster entry
 	// in the tfstate file will not be removed
-	poll.AsyncOperation(ctx, client, operationID, &resp.Diagnostics)
+	asyncOperation := async.New(
+		ctx,
+		client,
+		operationID,
+		constants.TaskHypervisorCluster,
+	)
+	err = asyncOperation.Poll()
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"error deleting hypervisorcluster "+id,
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
 }
 
 func (r *Resource) ImportState(
