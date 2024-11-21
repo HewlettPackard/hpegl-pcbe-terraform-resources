@@ -290,59 +290,28 @@ func doCreate(
 	location := sysHeaderOpts.GetResponseHeaders().Get("Location")[0]
 	sysHeaderOpts.ResponseHeaders.Clear()
 	operationID := path.Base(location)
-	opResp := poll.AsyncOperation(ctx, client, operationID, diagsP)
-	if (*diagsP).HasError() {
-		return
-	}
-
-	if opResp == nil {
+	task := poll.New(ctx, client, operationID, constants.TaskHypervisorCluster)
+	err = task.Poll()
+	if err != nil {
 		(*diagsP).AddError(
 			"error creating hypervisorcluster",
-			"async operation did not return a source uri",
+			"unexpected poll error: "+err.Error(),
 		)
 
 		return
 	}
 
-	if len(opResp.GetAssociatedResources()) != 1 {
+	uri, err := task.GetAssociatedResourceUri()
+	if err != nil {
 		(*diagsP).AddError(
 			"error creating hypervisorcluster",
-			fmt.Sprintf("could not parse async operation. "+
-				"Unexpected length of associatedResources (%d)",
-				len(opResp.GetAssociatedResources()),
-			),
-		)
-
-		return
-
-	}
-
-	if opResp.GetAssociatedResources()[0].GetTypeEscaped() == nil {
-		(*diagsP).AddError(
-			"error creating hypervisorcluster",
-			fmt.Sprintf("could not parse async operation. "+
-				"associatedResources is nil",
-			),
+			"unexpected associated resource error: "+err.Error(),
 		)
 
 		return
 	}
 
-	if *(opResp.GetAssociatedResources()[0].GetTypeEscaped()) !=
-		constants.TaskHypervisorCluster {
-		(*diagsP).AddError(
-			"error creating hypervisorcluster",
-			fmt.Sprintf("could not parse async operation. "+
-				"Unexpected type for associatedResources (%s)",
-				*(opResp.GetAssociatedResources()[0].GetTypeEscaped()),
-			),
-		)
-
-		return
-	}
-
-	// Allow setting id in state as early as possible
-	hypervisorClusterID := path.Base(*(opResp.GetAssociatedResources()[0].GetResourceUri()))
+	hypervisorClusterID := path.Base(uri)
 	(*dataP).Id = types.StringValue(hypervisorClusterID)
 }
 
