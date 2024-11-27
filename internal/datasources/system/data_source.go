@@ -12,6 +12,7 @@ import (
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/constants"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/systems/privatecloudbusiness"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -156,8 +157,41 @@ func (s *DataSource) Read(
 		return
 	}
 
+	// TODO: Switch to GetStorageSerial() when FF-31483 is fixed
+	serial := system.GetStorageSystem().GetAdditionalData()["serialNumber"]
+	if serial == nil {
+		resp.Diagnostics.AddError(
+			"error reading system",
+			"storage serial number is nil",
+		)
+
+		return
+	}
+	serialNumber, ok := serial.(*string)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"error reading system",
+			"storage serial number cannot be cast to *string",
+		)
+
+		return
+	}
+
 	data.Name = types.StringValue(*name)
 	data.Id = types.StringValue(*id)
+
+	value := map[string]attr.Value{
+		"storage_serial": types.StringValue(*serialNumber),
+	}
+	storageSystem, diags := NewStorageSystemValue(
+		data.StorageSystem.AttributeTypes(ctx), value,
+	)
+
+	resp.Diagnostics.Append((diags)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	data.StorageSystem = storageSystem
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
