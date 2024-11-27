@@ -76,6 +76,10 @@ func TestAccSystemDataSource(t *testing.T) {
 			"array-5305-grp",
 		),
 		checkUUIDAttr("data.hpegl_pc_system.test", "id"),
+		resource.TestCheckResourceAttrSet(
+			"data.hpegl_pc_system.test",
+			"storage_system.storage_serial",
+		),
 	}
 
 	if simulation {
@@ -85,6 +89,11 @@ func TestAccSystemDataSource(t *testing.T) {
 				"data.hpegl_pc_system.test",
 				"id",
 				"126fd201-9e6e-5e31-9ffb-a766265b1fd3",
+			),
+			resource.TestCheckResourceAttr(
+				"data.hpegl_pc_system.test",
+				"storage_system.storage_serial",
+				"AF-836032",
 			),
 		)
 	}
