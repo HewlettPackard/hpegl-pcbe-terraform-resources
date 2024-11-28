@@ -27,6 +27,9 @@ resource "hpegl_pc_hypervisor_cluster" "my_hypervisor_cluster" {
 }
 
 resource "hpegl_pc_server" "my_server" {
-        name = "16.182.105.217"
         system_id = data.hpegl_pc_system.my_system.id
+        hypervisor_cluster_id   = "acd4daea-e5e3-5f35-8be3-ce4a4b6d946c"
+        esx_root_credential_id  = "cccfcad1-85b7-4162-b16e-f7cadc2c46b5"
+        ilo_admin_credential_id = "dddfcad1-85b7-4162-b16e-f7cadc2c46b5"
+        server_network = []
 }
