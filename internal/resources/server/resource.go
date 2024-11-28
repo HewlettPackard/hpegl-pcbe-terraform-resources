@@ -3,8 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
+	"path"
 
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/async"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/constants"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/systems/privatecloudbusiness"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	tfpath "github.com/hashicorp/terraform-plugin-framework/path"
@@ -143,16 +146,93 @@ func doRead(
 	}
 
 	(*dataP).Name = types.StringValue(*(server.GetName()))
+
+	if server.GetSerialNumber() == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'serial number' is nil",
+		)
+
+		return
+	}
+
+	(*dataP).SerialNumber = types.StringValue(*(server.GetSerialNumber()))
 }
 
 func doCreate(
-	_ context.Context,
-	_ client.PCBeClient,
+	ctx context.Context,
+	client client.PCBeClient,
 	dataP *ServerModel,
-	_ *diag.Diagnostics,
+	diagsP *diag.Diagnostics,
 ) {
-	// For now, just set the ID to a known value
-	(*dataP).Id = types.StringValue("697e8cbf-df7e-570c-a3c7-912d4ce8375a")
+	hciClusterUUID := (*dataP).HypervisorClusterId.ValueString()
+	esxRootCredentialId := (*dataP).EsxRootCredentialId.ValueString()
+	systemId := (*dataP).SystemId.ValueString()
+	iloAdminCredentialId := (*dataP).IloAdminCredentialId.ValueString()
+	sysClient, sysHeaderOpts, err := client.NewSysClient(ctx)
+
+	if err != nil {
+		(*diagsP).AddError(
+			"error adding hypervisor server",
+			"could not create client: "+err.Error(),
+		)
+
+		return
+	}
+	prc := privatecloudbusiness.
+		V1beta1SystemsItemAddHypervisorServersRequestBuilderPostRequestConfiguration{}
+	prb := privatecloudbusiness.
+		NewV1beta1SystemsItemAddHypervisorServersPostRequestBody()
+	prb.SetEsxRootCredentialId(&esxRootCredentialId)
+	prb.SetIloAdminCredentialId(&iloAdminCredentialId)
+	prb.SetHypervisorClusterId(&hciClusterUUID)
+
+	_, err = sysClient.PrivateCloudBusiness().
+		V1beta1().
+		Systems().ById(systemId).
+		AddHypervisorServers().
+		Post(ctx, prb, &prc)
+	if err != nil {
+		(*diagsP).AddError(
+			"error adding hypervisor server",
+			"unexpected post error: "+err.Error(),
+		)
+
+		return
+	}
+
+	location := sysHeaderOpts.GetResponseHeaders().Get("Location")[0]
+	sysHeaderOpts.ResponseHeaders.Clear()
+	operationID := path.Base(location)
+	asyncOperation := async.New(
+		ctx,
+		client,
+		operationID,
+		constants.TaskHypervisorServer,
+	)
+
+	err = asyncOperation.Poll()
+	if err != nil {
+		(*diagsP).AddError(
+			"error adding hypervisor server",
+			"unexpected poll error: "+err.Error(),
+		)
+
+		return
+	}
+
+	uri, err := asyncOperation.GetAssociatedResourceURI()
+	if err != nil {
+		(*diagsP).AddError(
+			"error adding hypervisor server",
+			"failed to get associated resource uri: "+err.Error(),
+		)
+
+		return
+	}
+
+	serverId := path.Base(uri)
+	(*dataP).Id = types.StringValue(serverId)
 }
 
 // TODO: (API) Implement create when server create API is implemented
