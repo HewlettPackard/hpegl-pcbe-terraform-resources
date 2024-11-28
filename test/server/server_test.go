@@ -65,8 +65,11 @@ func checkUUIDAttr(resource string, attr string) func(*terraform.State) error {
 func TestAccServerResource(t *testing.T) {
 	config := providerConfig + `
 	resource "hpegl_pc_server" "test" {
-		name = "16.182.105.217"
-		system_id = "126fd201-9e6e-5e31-9ffb-a766265b1fd3"
+	        system_id   = "126fd201-9e6e-5e31-9ffb-a766265b1fd3"
+	        hypervisor_cluster_id   = "acd4daea-e5e3-5f35-8be3-ce4a4b6d946c"
+	        esx_root_credential_id  = "cccfcad1-85b7-4162-b16e-f7cadc2c46b5"
+	        ilo_admin_credential_id = "dddfcad1-85b7-4162-b16e-f7cadc2c46b5"
+	        server_network = []
 	}
 	`
 
@@ -78,6 +81,9 @@ func TestAccServerResource(t *testing.T) {
 		),
 		checkUUIDAttr("hpegl_pc_server.test", "id"),
 		checkUUIDAttr("hpegl_pc_server.test", "system_id"),
+		checkUUIDAttr("hpegl_pc_server.test", "hypervisor_cluster_id"),
+		checkUUIDAttr("hpegl_pc_server.test", "esx_root_credential_id"),
+		checkUUIDAttr("hpegl_pc_server.test", "ilo_admin_credential_id"),
 	}
 
 	if simulation {
@@ -91,6 +97,21 @@ func TestAccServerResource(t *testing.T) {
 				"hpegl_pc_server.test",
 				"system_id",
 				"126fd201-9e6e-5e31-9ffb-a766265b1fd3",
+			),
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_server.test",
+				"hypervisor_cluster_id",
+				"acd4daea-e5e3-5f35-8be3-ce4a4b6d946c",
+			),
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_server.test",
+				"esx_root_credential_id",
+				"cccfcad1-85b7-4162-b16e-f7cadc2c46b5",
+			),
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_server.test",
+				"ilo_admin_credential_id",
+				"dddfcad1-85b7-4162-b16e-f7cadc2c46b5",
 			),
 		)
 	}
