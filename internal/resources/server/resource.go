@@ -59,6 +59,12 @@ func (r *Resource) Configure(
 	r.client = req.ProviderData.(*client.PCBeClient)
 }
 
+// doRead reads the server data from the PCBe API and prepares to update
+// the model.
+// Note: we check that returned fields match the 'required' value specified
+// by the user in the Terraform configuration. For computed fields, we
+// will set the value to the one returned by the API, even if the value
+// has changed.
 func doRead(
 	ctx context.Context,
 	client client.PCBeClient,
@@ -105,6 +111,7 @@ func doRead(
 		return
 	}
 
+	// If this doesn't match, something is wrong
 	if *(server.GetId()) != serverID {
 		(*diagsP).AddError(
 			"error reading server",
@@ -125,6 +132,7 @@ func doRead(
 		return
 	}
 
+	// If this doesn't match, something is wrong
 	if *(server.GetSystemId()) != systemID {
 		(*diagsP).AddError(
 			"error reading server",
@@ -135,6 +143,38 @@ func doRead(
 
 		return
 	}
+
+	// If this doesn't match, something is wrong
+	if server.GetHypervisorHost() == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'hypervisor host' is nil",
+		)
+
+		return
+	}
+
+	// If this doesn't match, something is wrong
+	hypervisorClusterID := server.GetHypervisorHost().GetHypervisorClusterId()
+	if hypervisorClusterID == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'hypervisor cluster id' is nil",
+		)
+
+		return
+	}
+
+	if server.GetSerialNumber() == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'serial number' is nil",
+		)
+
+		return
+	}
+
+	(*dataP).SerialNumber = types.StringValue(*(server.GetSerialNumber()))
 
 	if server.GetName() == nil {
 		(*diagsP).AddError(
@@ -147,16 +187,8 @@ func doRead(
 
 	(*dataP).Name = types.StringValue(*(server.GetName()))
 
-	if server.GetSerialNumber() == nil {
-		(*diagsP).AddError(
-			"error reading server",
-			"'serial number' is nil",
-		)
-
-		return
-	}
-
-	(*dataP).SerialNumber = types.StringValue(*(server.GetSerialNumber()))
+	// TODO: (API) Add esxRootCredentialId when FF-31524 is addressed
+	// TODO: (API) Add iloAdminCredentialId when FF-31525 is addressed
 }
 
 func doCreate(
