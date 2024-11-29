@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 
@@ -13,6 +14,7 @@ import (
 	tfpath "github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -29,6 +31,59 @@ func NewResource() resource.Resource {
 // Resource defines the resource implementation.
 type Resource struct {
 	client *client.PCBeClient
+}
+
+// parseNetworksToPostFormat parses the server network data from the Terraform
+// input configuration and returns a slice of server network data which can be
+// used in a POST request to the PCBe API to create a new server
+// TODO: (API) Issue FF-31496 will prevent this from working currently.
+func parseNetworksToPostFormat(serverNetworks basetypes.ListValue) (
+	[]privatecloudbusiness.
+		V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetworkable,
+	error,
+) {
+	var postRequestNetworks []privatecloudbusiness.
+		V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetworkable
+
+	networks := serverNetworks.Elements()
+	for _, network := range networks {
+		serverNetwork, ok := network.(ServerNetworkValue)
+		if !ok {
+			msg := "server network element is not a ServerNetworkValue"
+
+			return nil, errors.New(msg)
+		}
+
+		infos := serverNetwork.DataIpInfos.Elements()
+		if len(infos) != 1 {
+			msg := "server network must be an array of length 1"
+
+			return nil, errors.New(msg)
+		}
+
+		dataIPInfosValue, ok := infos[0].(DataIpInfosValue)
+		if !ok {
+			msg := "data ip info element is not a DataIpInfosValue"
+
+			return nil, errors.New(msg)
+		}
+
+		ip := dataIPInfosValue.IpAddress.ValueString()
+		net := privatecloudbusiness.
+			NewV1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork()
+		dataIPInfos := privatecloudbusiness.
+			NewV1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_dataIpInfos()
+		dataIPInfos.SetIpAddress(&ip)
+		dataIps := []privatecloudbusiness.
+			V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_dataIpInfosable{
+			dataIPInfos,
+		}
+		net.SetDataIpInfos(dataIps)
+		postRequestNetworks = []privatecloudbusiness.
+			V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetworkable{net}
+	}
+
+	return postRequestNetworks, nil
 }
 
 func (r *Resource) Metadata(
@@ -201,6 +256,36 @@ func doCreate(
 	esxRootCredentialID := (*dataP).EsxRootCredentialId.ValueString()
 	systemID := (*dataP).SystemId.ValueString()
 	iloAdminCredentialID := (*dataP).IloAdminCredentialId.ValueString()
+	serverNetworks := (*dataP).ServerNetwork
+	if serverNetworks.IsNull() {
+		(*diagsP).AddError(
+			"error adding hypervisor server",
+			"server network list is null",
+		)
+
+		return
+
+	}
+	prc := privatecloudbusiness.
+		V1beta1SystemsItemAddHypervisorServersRequestBuilderPostRequestConfiguration{}
+	prb := privatecloudbusiness.
+		NewV1beta1SystemsItemAddHypervisorServersPostRequestBody()
+	prb.SetEsxRootCredentialId(&esxRootCredentialID)
+	prb.SetIloAdminCredentialId(&iloAdminCredentialID)
+	prb.SetHypervisorClusterId(&hciClusterUUID)
+
+	postRequestNetworks, err := parseNetworksToPostFormat(serverNetworks)
+	if err != nil {
+		(*diagsP).AddError(
+			"error adding hypervisor server",
+			"could not parse server networks: "+err.Error(),
+		)
+
+		return
+	}
+
+	prb.SetServerNetwork(postRequestNetworks)
+
 	sysClient, sysHeaderOpts, err := client.NewSysClient(ctx)
 	if err != nil {
 		(*diagsP).AddError(
@@ -210,13 +295,6 @@ func doCreate(
 
 		return
 	}
-	prc := privatecloudbusiness.
-		V1beta1SystemsItemAddHypervisorServersRequestBuilderPostRequestConfiguration{}
-	prb := privatecloudbusiness.
-		NewV1beta1SystemsItemAddHypervisorServersPostRequestBody()
-	prb.SetEsxRootCredentialId(&esxRootCredentialID)
-	prb.SetIloAdminCredentialId(&iloAdminCredentialID)
-	prb.SetHypervisorClusterId(&hciClusterUUID)
 
 	_, err = sysClient.PrivateCloudBusiness().
 		V1beta1().
