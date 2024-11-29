@@ -79,6 +79,10 @@ func TestAccServerResource(t *testing.T) {
 			"name",
 			"16.182.105.217",
 		),
+		resource.TestCheckResourceAttrSet(
+			"hpegl_pc_server.test",
+			"name",
+		),
 		checkUUIDAttr("hpegl_pc_server.test", "id"),
 		checkUUIDAttr("hpegl_pc_server.test", "system_id"),
 		checkUUIDAttr("hpegl_pc_server.test", "hypervisor_cluster_id"),
@@ -112,6 +116,11 @@ func TestAccServerResource(t *testing.T) {
 				"hpegl_pc_server.test",
 				"ilo_admin_credential_id",
 				"dddfcad1-85b7-4162-b16e-f7cadc2c46b5",
+			),
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_server.test",
+				"name",
+				"16.182.105.217",
 			),
 		)
 	}
