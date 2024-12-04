@@ -400,7 +400,6 @@ func (r *Resource) Update(
 	tflog.Error(ctx, "update server is not implemented")
 }
 
-// TODO: (API) Implement delete when server delete API is implemented
 func (r *Resource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -415,7 +414,57 @@ func (r *Resource) Delete(
 		return
 	}
 
-	// For now, just delete the state
+	serverID := data.Id.ValueString()
+	sysClient, sysHeaderOpts, err := r.client.NewSysClient(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"error deleting hypervisor server",
+			"could not create client: "+err.Error(),
+		)
+
+		return
+	}
+
+	prc := privatecloudbusiness.
+		V1beta1SystemsItemRemoveHypervisorServersRequestBuilderPostRequestConfiguration{}
+	prb := privatecloudbusiness.
+		NewV1beta1SystemsItemRemoveHypervisorServersPostRequestBody()
+	prb.SetServerIds([]string{serverID})
+
+	_, err = sysClient.PrivateCloudBusiness().
+		V1beta1().
+		Systems().ById(data.SystemId.ValueString()).
+		RemoveHypervisorServers().
+		Post(ctx, prb, &prc)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"error deleting hypervisor server",
+			"unexpected post error: "+err.Error(),
+		)
+
+		return
+	}
+
+	location := sysHeaderOpts.GetResponseHeaders().Get("Location")[0]
+	sysHeaderOpts.ResponseHeaders.Clear()
+	operationID := path.Base(location)
+	asyncOperation := async.New(
+		ctx,
+		*(r.client),
+		operationID,
+		constants.TaskHypervisorServer,
+	)
+
+	err = asyncOperation.Poll()
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"error deleting hypervisor server",
+			"unexpected poll error: "+err.Error(),
+		)
+
+		return
+	}
+	// delete the state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
