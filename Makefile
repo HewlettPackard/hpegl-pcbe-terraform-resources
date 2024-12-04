@@ -55,7 +55,9 @@ demo:
 	tfconfig=$$(mktemp); \
 	sed "s@__HOME__@${HOME}@g" test/.terraformrc > $$tfconfig; \
 	env TF_LOG=INFO env TF_CLI_CONFIG_FILE=$$tfconfig \
-		terraform -chdir=examples apply -auto-approve
+		terraform -chdir=examples apply -auto-approve; \
+	env TF_LOG=INFO env TF_CLI_CONFIG_FILE=$$tfconfig \
+		terraform -chdir=examples destroy -auto-approve
 
 lint:
 	@golangci-lint --version
