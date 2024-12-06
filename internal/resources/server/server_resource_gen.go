@@ -23,10 +23,36 @@ func ServerResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "ID corresponding to the ESXi password",
 				MarkdownDescription: "ID corresponding to the ESXi password",
 			},
-			"hypervisor_cluster_id": schema.StringAttribute{
+			"hypervisor_host": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"hypervisor_cluster_id": schema.StringAttribute{
+						Required:            true,
+						Description:         "UUID of hypervisor cluster",
+						MarkdownDescription: "UUID of hypervisor cluster",
+					},
+					"hypervisor_cluster_name": schema.StringAttribute{
+						Computed: true,
+					},
+					"hypervisor_host_ip": schema.StringAttribute{
+						Required:            true,
+						Description:         "IP addres of hypervisor hosts",
+						MarkdownDescription: "IP addres of hypervisor hosts",
+					},
+					"id": schema.StringAttribute{
+						Computed: true,
+					},
+					"name": schema.StringAttribute{
+						Computed: true,
+					},
+				},
+				CustomType: HypervisorHostType{
+					ObjectType: types.ObjectType{
+						AttrTypes: HypervisorHostValue{}.AttributeTypes(ctx),
+					},
+				},
 				Required:            true,
-				Description:         "hypervisor cluster UUID",
-				MarkdownDescription: "hypervisor cluster UUID",
+				Description:         "hypervisor host details",
+				MarkdownDescription: "hypervisor host details",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -91,14 +117,558 @@ func ServerResourceSchema(ctx context.Context) schema.Schema {
 }
 
 type ServerModel struct {
-	EsxRootCredentialId  types.String `tfsdk:"esx_root_credential_id"`
-	HypervisorClusterId  types.String `tfsdk:"hypervisor_cluster_id"`
-	Id                   types.String `tfsdk:"id"`
-	IloAdminCredentialId types.String `tfsdk:"ilo_admin_credential_id"`
-	Name                 types.String `tfsdk:"name"`
-	SerialNumber         types.String `tfsdk:"serial_number"`
-	ServerNetwork        types.List   `tfsdk:"server_network"`
-	SystemId             types.String `tfsdk:"system_id"`
+	EsxRootCredentialId  types.String        `tfsdk:"esx_root_credential_id"`
+	HypervisorHost       HypervisorHostValue `tfsdk:"hypervisor_host"`
+	Id                   types.String        `tfsdk:"id"`
+	IloAdminCredentialId types.String        `tfsdk:"ilo_admin_credential_id"`
+	Name                 types.String        `tfsdk:"name"`
+	SerialNumber         types.String        `tfsdk:"serial_number"`
+	ServerNetwork        types.List          `tfsdk:"server_network"`
+	SystemId             types.String        `tfsdk:"system_id"`
+}
+
+var _ basetypes.ObjectTypable = HypervisorHostType{}
+
+type HypervisorHostType struct {
+	basetypes.ObjectType
+}
+
+func (t HypervisorHostType) Equal(o attr.Type) bool {
+	other, ok := o.(HypervisorHostType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t HypervisorHostType) String() string {
+	return "HypervisorHostType"
+}
+
+func (t HypervisorHostType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	hypervisorClusterIdAttribute, ok := attributes["hypervisor_cluster_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`hypervisor_cluster_id is missing from object`)
+
+		return nil, diags
+	}
+
+	hypervisorClusterIdVal, ok := hypervisorClusterIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`hypervisor_cluster_id expected to be basetypes.StringValue, was: %T`, hypervisorClusterIdAttribute))
+	}
+
+	hypervisorClusterNameAttribute, ok := attributes["hypervisor_cluster_name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`hypervisor_cluster_name is missing from object`)
+
+		return nil, diags
+	}
+
+	hypervisorClusterNameVal, ok := hypervisorClusterNameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`hypervisor_cluster_name expected to be basetypes.StringValue, was: %T`, hypervisorClusterNameAttribute))
+	}
+
+	hypervisorHostIpAttribute, ok := attributes["hypervisor_host_ip"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`hypervisor_host_ip is missing from object`)
+
+		return nil, diags
+	}
+
+	hypervisorHostIpVal, ok := hypervisorHostIpAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`hypervisor_host_ip expected to be basetypes.StringValue, was: %T`, hypervisorHostIpAttribute))
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return nil, diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return nil, diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return HypervisorHostValue{
+		HypervisorClusterId:   hypervisorClusterIdVal,
+		HypervisorClusterName: hypervisorClusterNameVal,
+		HypervisorHostIp:      hypervisorHostIpVal,
+		Id:                    idVal,
+		Name:                  nameVal,
+		state:                 attr.ValueStateKnown,
+	}, diags
+}
+
+func NewHypervisorHostValueNull() HypervisorHostValue {
+	return HypervisorHostValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewHypervisorHostValueUnknown() HypervisorHostValue {
+	return HypervisorHostValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewHypervisorHostValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (HypervisorHostValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing HypervisorHostValue Attribute Value",
+				"While creating a HypervisorHostValue value, a missing attribute value was detected. "+
+					"A HypervisorHostValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("HypervisorHostValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid HypervisorHostValue Attribute Type",
+				"While creating a HypervisorHostValue value, an invalid attribute value was detected. "+
+					"A HypervisorHostValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("HypervisorHostValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("HypervisorHostValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra HypervisorHostValue Attribute Value",
+				"While creating a HypervisorHostValue value, an extra attribute value was detected. "+
+					"A HypervisorHostValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra HypervisorHostValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewHypervisorHostValueUnknown(), diags
+	}
+
+	hypervisorClusterIdAttribute, ok := attributes["hypervisor_cluster_id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`hypervisor_cluster_id is missing from object`)
+
+		return NewHypervisorHostValueUnknown(), diags
+	}
+
+	hypervisorClusterIdVal, ok := hypervisorClusterIdAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`hypervisor_cluster_id expected to be basetypes.StringValue, was: %T`, hypervisorClusterIdAttribute))
+	}
+
+	hypervisorClusterNameAttribute, ok := attributes["hypervisor_cluster_name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`hypervisor_cluster_name is missing from object`)
+
+		return NewHypervisorHostValueUnknown(), diags
+	}
+
+	hypervisorClusterNameVal, ok := hypervisorClusterNameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`hypervisor_cluster_name expected to be basetypes.StringValue, was: %T`, hypervisorClusterNameAttribute))
+	}
+
+	hypervisorHostIpAttribute, ok := attributes["hypervisor_host_ip"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`hypervisor_host_ip is missing from object`)
+
+		return NewHypervisorHostValueUnknown(), diags
+	}
+
+	hypervisorHostIpVal, ok := hypervisorHostIpAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`hypervisor_host_ip expected to be basetypes.StringValue, was: %T`, hypervisorHostIpAttribute))
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return NewHypervisorHostValueUnknown(), diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return NewHypervisorHostValueUnknown(), diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	if diags.HasError() {
+		return NewHypervisorHostValueUnknown(), diags
+	}
+
+	return HypervisorHostValue{
+		HypervisorClusterId:   hypervisorClusterIdVal,
+		HypervisorClusterName: hypervisorClusterNameVal,
+		HypervisorHostIp:      hypervisorHostIpVal,
+		Id:                    idVal,
+		Name:                  nameVal,
+		state:                 attr.ValueStateKnown,
+	}, diags
+}
+
+func NewHypervisorHostValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) HypervisorHostValue {
+	object, diags := NewHypervisorHostValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewHypervisorHostValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t HypervisorHostType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewHypervisorHostValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewHypervisorHostValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewHypervisorHostValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewHypervisorHostValueMust(HypervisorHostValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t HypervisorHostType) ValueType(ctx context.Context) attr.Value {
+	return HypervisorHostValue{}
+}
+
+var _ basetypes.ObjectValuable = HypervisorHostValue{}
+
+type HypervisorHostValue struct {
+	HypervisorClusterId   basetypes.StringValue `tfsdk:"hypervisor_cluster_id"`
+	HypervisorClusterName basetypes.StringValue `tfsdk:"hypervisor_cluster_name"`
+	HypervisorHostIp      basetypes.StringValue `tfsdk:"hypervisor_host_ip"`
+	Id                    basetypes.StringValue `tfsdk:"id"`
+	Name                  basetypes.StringValue `tfsdk:"name"`
+	state                 attr.ValueState
+}
+
+func (v HypervisorHostValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 5)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["hypervisor_cluster_id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["hypervisor_cluster_name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["hypervisor_host_ip"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 5)
+
+		val, err = v.HypervisorClusterId.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["hypervisor_cluster_id"] = val
+
+		val, err = v.HypervisorClusterName.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["hypervisor_cluster_name"] = val
+
+		val, err = v.HypervisorHostIp.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["hypervisor_host_ip"] = val
+
+		val, err = v.Id.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["id"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v HypervisorHostValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v HypervisorHostValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v HypervisorHostValue) String() string {
+	return "HypervisorHostValue"
+}
+
+func (v HypervisorHostValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"hypervisor_cluster_id":   basetypes.StringType{},
+		"hypervisor_cluster_name": basetypes.StringType{},
+		"hypervisor_host_ip":      basetypes.StringType{},
+		"id":                      basetypes.StringType{},
+		"name":                    basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"hypervisor_cluster_id":   v.HypervisorClusterId,
+			"hypervisor_cluster_name": v.HypervisorClusterName,
+			"hypervisor_host_ip":      v.HypervisorHostIp,
+			"id":                      v.Id,
+			"name":                    v.Name,
+		})
+
+	return objVal, diags
+}
+
+func (v HypervisorHostValue) Equal(o attr.Value) bool {
+	other, ok := o.(HypervisorHostValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.HypervisorClusterId.Equal(other.HypervisorClusterId) {
+		return false
+	}
+
+	if !v.HypervisorClusterName.Equal(other.HypervisorClusterName) {
+		return false
+	}
+
+	if !v.HypervisorHostIp.Equal(other.HypervisorHostIp) {
+		return false
+	}
+
+	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	return true
+}
+
+func (v HypervisorHostValue) Type(ctx context.Context) attr.Type {
+	return HypervisorHostType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v HypervisorHostValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"hypervisor_cluster_id":   basetypes.StringType{},
+		"hypervisor_cluster_name": basetypes.StringType{},
+		"hypervisor_host_ip":      basetypes.StringType{},
+		"id":                      basetypes.StringType{},
+		"name":                    basetypes.StringType{},
+	}
 }
 
 var _ basetypes.ObjectTypable = ServerNetworkType{}
