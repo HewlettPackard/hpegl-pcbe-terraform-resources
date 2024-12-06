@@ -10,6 +10,7 @@ import (
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/constants"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/systems/privatecloudbusiness"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	tfpath "github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -199,7 +200,6 @@ func doRead(
 		return
 	}
 
-	// If this doesn't match, something is wrong
 	if server.GetHypervisorHost() == nil {
 		(*diagsP).AddError(
 			"error reading server",
@@ -209,7 +209,6 @@ func doRead(
 		return
 	}
 
-	// If this doesn't match, something is wrong
 	hypervisorClusterID := server.GetHypervisorHost().GetHypervisorClusterId()
 	if hypervisorClusterID == nil {
 		(*diagsP).AddError(
@@ -219,6 +218,89 @@ func doRead(
 
 		return
 	}
+
+	// If this doesn't match, something is wrong
+	if *hypervisorClusterID != (*dataP).HypervisorHost.HypervisorClusterId.ValueString() {
+		(*diagsP).AddError(
+			"error reading server",
+			"'hypervisor cluster id' mismatch "+
+				(*dataP).HypervisorHost.HypervisorClusterId.ValueString()+
+				" != "+*hypervisorClusterID,
+		)
+
+		return
+	}
+
+	hypervisorHostIP := server.GetHypervisorHost().GetHypervisorHostIp()
+	if hypervisorHostIP == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'hypervisor host ip' is nil",
+		)
+
+		return
+	}
+
+	// If this doesn't match, something is wrong
+	if *hypervisorHostIP != (*dataP).HypervisorHost.HypervisorHostIp.ValueString() {
+		(*diagsP).AddError(
+			"error reading server",
+			"'hypervisor host ip' mismatch "+
+				(*dataP).HypervisorHost.HypervisorHostIp.ValueString()+
+				" != "+*hypervisorHostIP,
+		)
+
+		return
+	}
+
+	hypervisorClusterName := server.GetHypervisorHost().GetHypervisorClusterName()
+	if hypervisorClusterName == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'hypervisor host cluster name' is nil",
+		)
+
+		return
+	}
+
+	hypervisorHostID := server.GetHypervisorHost().GetId()
+	if hypervisorHostID == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'hypervisor host id' is nil",
+		)
+
+		return
+	}
+
+	hypervisorHostName := server.GetHypervisorHost().GetName()
+	if hypervisorHostName == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'hypervisor host name' is nil",
+		)
+
+		return
+	}
+
+	value := map[string]attr.Value{
+		"hypervisor_cluster_id":   types.StringValue(*hypervisorClusterID),
+		"hypervisor_cluster_name": types.StringValue(*hypervisorClusterName),
+		"hypervisor_host_ip":      types.StringValue(*hypervisorHostIP),
+		"id":                      types.StringValue(*hypervisorHostID),
+		"name":                    types.StringValue(*hypervisorHostName),
+	}
+
+	hypervisorHost, diags := NewHypervisorHostValue(
+		(*dataP).HypervisorHost.AttributeTypes(ctx), value,
+	)
+
+	(*diagsP).Append(diags...)
+	if (*diagsP).HasError() {
+		return
+	}
+
+	(*dataP).HypervisorHost = hypervisorHost
 
 	if server.GetSerialNumber() == nil {
 		(*diagsP).AddError(
@@ -252,7 +334,7 @@ func doCreate(
 	dataP *ServerModel,
 	diagsP *diag.Diagnostics,
 ) {
-	hciClusterUUID := (*dataP).HypervisorClusterId.ValueString()
+	hciClusterUUID := (*dataP).HypervisorHost.HypervisorClusterId.ValueString()
 	esxRootCredentialID := (*dataP).EsxRootCredentialId.ValueString()
 	systemID := (*dataP).SystemId.ValueString()
 	iloAdminCredentialID := (*dataP).IloAdminCredentialId.ValueString()
