@@ -15,7 +15,6 @@ import (
 	tfpath "github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -38,7 +37,7 @@ type Resource struct {
 // input configuration and returns a slice of server network data which can be
 // used in a POST request to the PCBe API to create a new server
 // TODO: (API) Issue FF-31496 will prevent this from working currently.
-func parseNetworksToPostFormat(serverNetworks basetypes.ListValue) (
+func parseNetworksToPostFormat(dataP *ServerModel) (
 	[]privatecloudbusiness.
 		V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetworkable,
 	error,
@@ -46,43 +45,70 @@ func parseNetworksToPostFormat(serverNetworks basetypes.ListValue) (
 	var postRequestNetworks []privatecloudbusiness.
 		V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetworkable
 
-	networks := serverNetworks.Elements()
-	for _, network := range networks {
-		serverNetwork, ok := network.(ServerNetworkValue)
-		if !ok {
-			msg := "server network element is not a ServerNetworkValue"
+	serverNetworks := (*dataP).ServerNetwork
+	if serverNetworks.IsNull() {
+		msg := "server network list is null"
 
-			return nil, errors.New(msg)
-		}
+		return nil, errors.New(msg)
 
-		infos := serverNetwork.DataIpInfos.Elements()
-		if len(infos) != 1 {
-			msg := "server network must be an array of length 1"
-
-			return nil, errors.New(msg)
-		}
-
-		dataIPInfosValue, ok := infos[0].(DataIpInfosValue)
-		if !ok {
-			msg := "data ip info element is not a DataIpInfosValue"
-
-			return nil, errors.New(msg)
-		}
-
-		ip := dataIPInfosValue.IpAddress.ValueString()
-		net := privatecloudbusiness.
-			NewV1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork()
-		dataIPInfos := privatecloudbusiness.
-			NewV1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_dataIpInfos()
-		dataIPInfos.SetIpAddress(&ip)
-		dataIps := []privatecloudbusiness.
-			V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_dataIpInfosable{
-			dataIPInfos,
-		}
-		net.SetDataIpInfos(dataIps)
-		postRequestNetworks = []privatecloudbusiness.
-			V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetworkable{net}
 	}
+
+	networks := serverNetworks.Elements()
+	if len(networks) != 1 {
+		msg := "server network list should be of length 1"
+
+		return nil, errors.New(msg)
+	}
+
+	serverNetwork, ok := networks[0].(ServerNetworkValue)
+	if !ok {
+		msg := "server network element is not a ServerNetworkValue"
+
+		return nil, errors.New(msg)
+	}
+
+	infos := serverNetwork.DataIpInfos.Elements()
+	if len(infos) != 1 {
+		msg := "server network must be an array of length 1"
+
+		return nil, errors.New(msg)
+	}
+
+	dataIPInfosValue, ok := infos[0].(DataIpInfosValue)
+	if !ok {
+		msg := "data ip info element is not a DataIpInfosValue"
+
+		return nil, errors.New(msg)
+	}
+
+	ip := dataIPInfosValue.IpAddress.ValueString()
+	dataIPInfos := privatecloudbusiness.
+		NewV1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_dataIpInfos()
+	dataIPInfos.SetIpAddress(&ip)
+	dataIps := []privatecloudbusiness.
+		V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_dataIpInfosable{
+		dataIPInfos,
+	}
+
+	iloIPInfos := privatecloudbusiness.
+		NewV1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_iloMgmtIpInfo()
+
+	iloIP := (*dataP).IloNetworkInfo.IloIp.ValueString()
+	iloIPInfos.SetIpAddress(&iloIP)
+
+	iloSubnetMask := (*dataP).IloNetworkInfo.SubnetMask.ValueString()
+	iloIPInfos.SetSubnetMask(&iloSubnetMask)
+
+	iloGateway := (*dataP).IloNetworkInfo.Gateway.ValueString()
+	iloIPInfos.SetGateway(&iloGateway)
+
+	net := privatecloudbusiness.
+		NewV1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork()
+	net.SetDataIpInfos(dataIps)
+	net.SetIloMgmtIpInfo(iloIPInfos)
+
+	postRequestNetworks = []privatecloudbusiness.
+		V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetworkable{net}
 
 	return postRequestNetworks, nil
 }
@@ -338,16 +364,6 @@ func doCreate(
 	esxRootCredentialID := (*dataP).EsxRootCredentialId.ValueString()
 	systemID := (*dataP).SystemId.ValueString()
 	iloAdminCredentialID := (*dataP).IloAdminCredentialId.ValueString()
-	serverNetworks := (*dataP).ServerNetwork
-	if serverNetworks.IsNull() {
-		(*diagsP).AddError(
-			"error adding hypervisor server",
-			"server network list is null",
-		)
-
-		return
-
-	}
 	prc := privatecloudbusiness.
 		V1beta1SystemsItemAddHypervisorServersRequestBuilderPostRequestConfiguration{}
 	prb := privatecloudbusiness.
@@ -356,7 +372,7 @@ func doCreate(
 	prb.SetIloAdminCredentialId(&iloAdminCredentialID)
 	prb.SetHypervisorClusterId(&hciClusterUUID)
 
-	postRequestNetworks, err := parseNetworksToPostFormat(serverNetworks)
+	postRequestNetworks, err := parseNetworksToPostFormat(dataP)
 	if err != nil {
 		(*diagsP).AddError(
 			"error adding hypervisor server",
