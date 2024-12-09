@@ -9,7 +9,7 @@ type V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody struct {
     // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
     additionalData map[string]any
     // List of Unique Identifiers (usually UUIDs) of Hypervisor Clusters to be removed from the system.
-    hypervisorClusterIds []string
+    hypervisor_cluster_ids []string
 }
 // NewV1beta1SystemsItemRemoveHypervisorClustersPostRequestBody instantiates a new V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody and sets the default values.
 func NewV1beta1SystemsItemRemoveHypervisorClustersPostRequestBody()(*V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody) {
@@ -32,7 +32,7 @@ func (m *V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody) GetAdditiona
 // returns a map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error) when successful
 func (m *V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["hypervisorClusterIds"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+    res["hypervisor_cluster_ids"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
         val, err := n.GetCollectionOfPrimitiveValues("string")
         if err != nil {
             return err
@@ -50,10 +50,10 @@ func (m *V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody) GetFieldDese
     }
     return res
 }
-// GetHypervisorClusterIds gets the hypervisorClusterIds property value. List of Unique Identifiers (usually UUIDs) of Hypervisor Clusters to be removed from the system.
+// GetHypervisorClusterIds gets the hypervisor_cluster_ids property value. List of Unique Identifiers (usually UUIDs) of Hypervisor Clusters to be removed from the system.
 // returns a []string when successful
 func (m *V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody) GetHypervisorClusterIds()([]string) {
-    return m.hypervisorClusterIds
+    return m.hypervisor_cluster_ids
 }
 // Serialize serializes information the current object
 func (m *V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -75,9 +75,9 @@ func (m *V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody) Serialize(wr
 func (m *V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody) SetAdditionalData(value map[string]any)() {
     m.additionalData = value
 }
-// SetHypervisorClusterIds sets the hypervisorClusterIds property value. List of Unique Identifiers (usually UUIDs) of Hypervisor Clusters to be removed from the system.
+// SetHypervisorClusterIds sets the hypervisor_cluster_ids property value. List of Unique Identifiers (usually UUIDs) of Hypervisor Clusters to be removed from the system.
 func (m *V1beta1SystemsItemRemoveHypervisorClustersPostRequestBody) SetHypervisorClusterIds(value []string)() {
-    m.hypervisorClusterIds = value
+    m.hypervisor_cluster_ids = value
 }
 type V1beta1SystemsItemRemoveHypervisorClustersPostRequestBodyable interface {
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder

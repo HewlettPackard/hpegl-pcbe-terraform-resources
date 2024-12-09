@@ -8,7 +8,7 @@ type V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_iloMgmt
     // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
     additionalData map[string]any
     // gateway. Applies only to Alletra dHCI.
-    gateway *int32
+    gateway *string
     // IP Address. Applies only to Alletra dHCI.
     ipAddress *string
     // Subnet mask. Applies only to Alletra dHCI.
@@ -36,7 +36,7 @@ func (m *V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_ilo
 func (m *V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_iloMgmtIpInfo) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
     res["gateway"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
-        val, err := n.GetInt32Value()
+        val, err := n.GetStringValue()
         if err != nil {
             return err
         }
@@ -68,8 +68,8 @@ func (m *V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_ilo
     return res
 }
 // GetGateway gets the gateway property value. gateway. Applies only to Alletra dHCI.
-// returns a *int32 when successful
-func (m *V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_iloMgmtIpInfo) GetGateway()(*int32) {
+// returns a *string when successful
+func (m *V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_iloMgmtIpInfo) GetGateway()(*string) {
     return m.gateway
 }
 // GetIpAddress gets the ipAddress property value. IP Address. Applies only to Alletra dHCI.
@@ -85,7 +85,7 @@ func (m *V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_ilo
 // Serialize serializes information the current object
 func (m *V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_iloMgmtIpInfo) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
     {
-        err := writer.WriteInt32Value("gateway", m.GetGateway())
+        err := writer.WriteStringValue("gateway", m.GetGateway())
         if err != nil {
             return err
         }
@@ -115,7 +115,7 @@ func (m *V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_ilo
     m.additionalData = value
 }
 // SetGateway sets the gateway property value. gateway. Applies only to Alletra dHCI.
-func (m *V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_iloMgmtIpInfo) SetGateway(value *int32)() {
+func (m *V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_iloMgmtIpInfo) SetGateway(value *string)() {
     m.gateway = value
 }
 // SetIpAddress sets the ipAddress property value. IP Address. Applies only to Alletra dHCI.
@@ -129,10 +129,10 @@ func (m *V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_ilo
 type V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork_iloMgmtIpInfoable interface {
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
-    GetGateway()(*int32)
+    GetGateway()(*string)
     GetIpAddress()(*string)
     GetSubnetMask()(*string)
-    SetGateway(value *int32)()
+    SetGateway(value *string)()
     SetIpAddress(value *string)()
     SetSubnetMask(value *string)()
 }
