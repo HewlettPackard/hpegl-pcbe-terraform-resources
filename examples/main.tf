@@ -35,6 +35,11 @@ resource "hpegl_pc_server" "test" {
                 hypervisor_cluster_id = "acd4daea-e5e3-5f35-8be3-ce4a4b6d946c"
                 hypervisor_host_ip = "16.182.105.217"
         }
+        ilo_network_info = {
+                ilo_ip = "16.182.105.216"
+                gateway = "16.182.104.1"
+                subnet_mask = "255.255.248.0"
+        }
         server_network = [
                 {
                         data_ip_infos = [
