@@ -83,6 +83,11 @@ func TestAccServerResource(t *testing.T) {
 	                hypervisor_cluster_id = "acd4daea-e5e3-5f35-8be3-ce4a4b6d946c"
 	                hypervisor_host_ip = "16.182.105.217"
 	        }
+	        ilo_network_info = {
+	                ilo_ip = "16.182.105.216"
+	                gateway = "16.182.104.1"
+	                subnet_mask = "255.255.248.0"
+	        }
 	        server_network = [
 	                {
 	                        data_ip_infos = [
@@ -112,6 +117,22 @@ func TestAccServerResource(t *testing.T) {
 		resource.TestCheckResourceAttrSet(
 			"hpegl_pc_server.test",
 			"hypervisor_host.hypervisor_cluster_name",
+		),
+		resource.TestCheckResourceAttrSet(
+			"hpegl_pc_server.test",
+			"hypervisor_host.hypervisor_host_ip",
+		),
+		resource.TestCheckResourceAttrSet(
+			"hpegl_pc_server.test",
+			"ilo_network_info.ilo_ip",
+		),
+		resource.TestCheckResourceAttrSet(
+			"hpegl_pc_server.test",
+			"ilo_network_info.gateway",
+		),
+		resource.TestCheckResourceAttrSet(
+			"hpegl_pc_server.test",
+			"ilo_network_info.subnet_mask",
 		),
 		resource.TestCheckResourceAttrSet(
 			"hpegl_pc_server.test",
@@ -171,6 +192,21 @@ func TestAccServerResource(t *testing.T) {
 				"hpegl_pc_server.test",
 				"hypervisor_host.id",
 				"530b1894-9bd0-5627-9362-565aff1e5cbd",
+			),
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_server.test",
+				"ilo_network_info.ilo_ip",
+				"16.182.105.216",
+			),
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_server.test",
+				"ilo_network_info.gateway",
+				"16.182.104.1",
+			),
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_server.test",
+				"ilo_network_info.subnet_mask",
+				"255.255.248.0",
 			),
 			resource.TestCheckResourceAttr(
 				"hpegl_pc_server.test",
