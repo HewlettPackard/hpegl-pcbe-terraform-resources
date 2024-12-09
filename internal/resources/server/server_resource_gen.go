@@ -64,6 +64,33 @@ func ServerResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "ID corresponding to the ilo admin credential",
 				MarkdownDescription: "ID corresponding to the ilo admin credential",
 			},
+			"ilo_network_info": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"gateway": schema.StringAttribute{
+						Required:            true,
+						Description:         "IP address of ilo gateway",
+						MarkdownDescription: "IP address of ilo gateway",
+					},
+					"ilo_ip": schema.StringAttribute{
+						Required:            true,
+						Description:         "IP address of ilo",
+						MarkdownDescription: "IP address of ilo",
+					},
+					"subnet_mask": schema.StringAttribute{
+						Required:            true,
+						Description:         "subnet of ilo gateway, eg 255.255.255.0",
+						MarkdownDescription: "subnet of ilo gateway, eg 255.255.255.0",
+					},
+				},
+				CustomType: IloNetworkInfoType{
+					ObjectType: types.ObjectType{
+						AttrTypes: IloNetworkInfoValue{}.AttributeTypes(ctx),
+					},
+				},
+				Required:            true,
+				Description:         "ilo network information",
+				MarkdownDescription: "ilo network information",
+			},
 			"name": schema.StringAttribute{
 				Computed:            true,
 				Description:         "A system specified name for the resource.",
@@ -121,6 +148,7 @@ type ServerModel struct {
 	HypervisorHost       HypervisorHostValue `tfsdk:"hypervisor_host"`
 	Id                   types.String        `tfsdk:"id"`
 	IloAdminCredentialId types.String        `tfsdk:"ilo_admin_credential_id"`
+	IloNetworkInfo       IloNetworkInfoValue `tfsdk:"ilo_network_info"`
 	Name                 types.String        `tfsdk:"name"`
 	SerialNumber         types.String        `tfsdk:"serial_number"`
 	ServerNetwork        types.List          `tfsdk:"server_network"`
@@ -668,6 +696,440 @@ func (v HypervisorHostValue) AttributeTypes(ctx context.Context) map[string]attr
 		"hypervisor_host_ip":      basetypes.StringType{},
 		"id":                      basetypes.StringType{},
 		"name":                    basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = IloNetworkInfoType{}
+
+type IloNetworkInfoType struct {
+	basetypes.ObjectType
+}
+
+func (t IloNetworkInfoType) Equal(o attr.Type) bool {
+	other, ok := o.(IloNetworkInfoType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t IloNetworkInfoType) String() string {
+	return "IloNetworkInfoType"
+}
+
+func (t IloNetworkInfoType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	gatewayAttribute, ok := attributes["gateway"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`gateway is missing from object`)
+
+		return nil, diags
+	}
+
+	gatewayVal, ok := gatewayAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`gateway expected to be basetypes.StringValue, was: %T`, gatewayAttribute))
+	}
+
+	iloIpAttribute, ok := attributes["ilo_ip"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`ilo_ip is missing from object`)
+
+		return nil, diags
+	}
+
+	iloIpVal, ok := iloIpAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`ilo_ip expected to be basetypes.StringValue, was: %T`, iloIpAttribute))
+	}
+
+	subnetMaskAttribute, ok := attributes["subnet_mask"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`subnet_mask is missing from object`)
+
+		return nil, diags
+	}
+
+	subnetMaskVal, ok := subnetMaskAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`subnet_mask expected to be basetypes.StringValue, was: %T`, subnetMaskAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return IloNetworkInfoValue{
+		Gateway:    gatewayVal,
+		IloIp:      iloIpVal,
+		SubnetMask: subnetMaskVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewIloNetworkInfoValueNull() IloNetworkInfoValue {
+	return IloNetworkInfoValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewIloNetworkInfoValueUnknown() IloNetworkInfoValue {
+	return IloNetworkInfoValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewIloNetworkInfoValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (IloNetworkInfoValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing IloNetworkInfoValue Attribute Value",
+				"While creating a IloNetworkInfoValue value, a missing attribute value was detected. "+
+					"A IloNetworkInfoValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("IloNetworkInfoValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid IloNetworkInfoValue Attribute Type",
+				"While creating a IloNetworkInfoValue value, an invalid attribute value was detected. "+
+					"A IloNetworkInfoValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("IloNetworkInfoValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("IloNetworkInfoValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra IloNetworkInfoValue Attribute Value",
+				"While creating a IloNetworkInfoValue value, an extra attribute value was detected. "+
+					"A IloNetworkInfoValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra IloNetworkInfoValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewIloNetworkInfoValueUnknown(), diags
+	}
+
+	gatewayAttribute, ok := attributes["gateway"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`gateway is missing from object`)
+
+		return NewIloNetworkInfoValueUnknown(), diags
+	}
+
+	gatewayVal, ok := gatewayAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`gateway expected to be basetypes.StringValue, was: %T`, gatewayAttribute))
+	}
+
+	iloIpAttribute, ok := attributes["ilo_ip"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`ilo_ip is missing from object`)
+
+		return NewIloNetworkInfoValueUnknown(), diags
+	}
+
+	iloIpVal, ok := iloIpAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`ilo_ip expected to be basetypes.StringValue, was: %T`, iloIpAttribute))
+	}
+
+	subnetMaskAttribute, ok := attributes["subnet_mask"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`subnet_mask is missing from object`)
+
+		return NewIloNetworkInfoValueUnknown(), diags
+	}
+
+	subnetMaskVal, ok := subnetMaskAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`subnet_mask expected to be basetypes.StringValue, was: %T`, subnetMaskAttribute))
+	}
+
+	if diags.HasError() {
+		return NewIloNetworkInfoValueUnknown(), diags
+	}
+
+	return IloNetworkInfoValue{
+		Gateway:    gatewayVal,
+		IloIp:      iloIpVal,
+		SubnetMask: subnetMaskVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewIloNetworkInfoValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) IloNetworkInfoValue {
+	object, diags := NewIloNetworkInfoValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewIloNetworkInfoValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t IloNetworkInfoType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewIloNetworkInfoValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewIloNetworkInfoValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewIloNetworkInfoValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewIloNetworkInfoValueMust(IloNetworkInfoValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t IloNetworkInfoType) ValueType(ctx context.Context) attr.Value {
+	return IloNetworkInfoValue{}
+}
+
+var _ basetypes.ObjectValuable = IloNetworkInfoValue{}
+
+type IloNetworkInfoValue struct {
+	Gateway    basetypes.StringValue `tfsdk:"gateway"`
+	IloIp      basetypes.StringValue `tfsdk:"ilo_ip"`
+	SubnetMask basetypes.StringValue `tfsdk:"subnet_mask"`
+	state      attr.ValueState
+}
+
+func (v IloNetworkInfoValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["gateway"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["ilo_ip"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["subnet_mask"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Gateway.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["gateway"] = val
+
+		val, err = v.IloIp.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["ilo_ip"] = val
+
+		val, err = v.SubnetMask.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["subnet_mask"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v IloNetworkInfoValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v IloNetworkInfoValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v IloNetworkInfoValue) String() string {
+	return "IloNetworkInfoValue"
+}
+
+func (v IloNetworkInfoValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"gateway":     basetypes.StringType{},
+		"ilo_ip":      basetypes.StringType{},
+		"subnet_mask": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"gateway":     v.Gateway,
+			"ilo_ip":      v.IloIp,
+			"subnet_mask": v.SubnetMask,
+		})
+
+	return objVal, diags
+}
+
+func (v IloNetworkInfoValue) Equal(o attr.Value) bool {
+	other, ok := o.(IloNetworkInfoValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Gateway.Equal(other.Gateway) {
+		return false
+	}
+
+	if !v.IloIp.Equal(other.IloIp) {
+		return false
+	}
+
+	if !v.SubnetMask.Equal(other.SubnetMask) {
+		return false
+	}
+
+	return true
+}
+
+func (v IloNetworkInfoValue) Type(ctx context.Context) attr.Type {
+	return IloNetworkInfoType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v IloNetworkInfoValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"gateway":     basetypes.StringType{},
+		"ilo_ip":      basetypes.StringType{},
+		"subnet_mask": basetypes.StringType{},
 	}
 }
 
