@@ -35,8 +35,8 @@ func ServerResourceSchema(ctx context.Context) schema.Schema {
 					},
 					"hypervisor_host_ip": schema.StringAttribute{
 						Required:            true,
-						Description:         "IP addres of hypervisor hosts",
-						MarkdownDescription: "IP addres of hypervisor hosts",
+						Description:         "IP address of hypervisor server",
+						MarkdownDescription: "IP address of hypervisor server",
 					},
 					"id": schema.StringAttribute{
 						Computed: true,
@@ -122,6 +122,11 @@ func ServerResourceSchema(ctx context.Context) schema.Schema {
 							Required:            true,
 							Description:         "Details of data network",
 							MarkdownDescription: "Details of data network",
+						},
+						"esx_ip_address": schema.StringAttribute{
+							Required:            true,
+							Description:         "Initial IP address of the hypervisor server",
+							MarkdownDescription: "Initial IP address of the hypervisor server",
 						},
 					},
 					CustomType: ServerNetworkType{
@@ -1176,13 +1181,32 @@ func (t ServerNetworkType) ValueFromObject(ctx context.Context, in basetypes.Obj
 			fmt.Sprintf(`data_ip_infos expected to be basetypes.ListValue, was: %T`, dataIpInfosAttribute))
 	}
 
+	esxIpAddressAttribute, ok := attributes["esx_ip_address"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`esx_ip_address is missing from object`)
+
+		return nil, diags
+	}
+
+	esxIpAddressVal, ok := esxIpAddressAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`esx_ip_address expected to be basetypes.StringValue, was: %T`, esxIpAddressAttribute))
+	}
+
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	return ServerNetworkValue{
-		DataIpInfos: dataIpInfosVal,
-		state:       attr.ValueStateKnown,
+		DataIpInfos:  dataIpInfosVal,
+		EsxIpAddress: esxIpAddressVal,
+		state:        attr.ValueStateKnown,
 	}, diags
 }
 
@@ -1267,13 +1291,32 @@ func NewServerNetworkValue(attributeTypes map[string]attr.Type, attributes map[s
 			fmt.Sprintf(`data_ip_infos expected to be basetypes.ListValue, was: %T`, dataIpInfosAttribute))
 	}
 
+	esxIpAddressAttribute, ok := attributes["esx_ip_address"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`esx_ip_address is missing from object`)
+
+		return NewServerNetworkValueUnknown(), diags
+	}
+
+	esxIpAddressVal, ok := esxIpAddressAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`esx_ip_address expected to be basetypes.StringValue, was: %T`, esxIpAddressAttribute))
+	}
+
 	if diags.HasError() {
 		return NewServerNetworkValueUnknown(), diags
 	}
 
 	return ServerNetworkValue{
-		DataIpInfos: dataIpInfosVal,
-		state:       attr.ValueStateKnown,
+		DataIpInfos:  dataIpInfosVal,
+		EsxIpAddress: esxIpAddressVal,
+		state:        attr.ValueStateKnown,
 	}, diags
 }
 
@@ -1345,12 +1388,13 @@ func (t ServerNetworkType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ServerNetworkValue{}
 
 type ServerNetworkValue struct {
-	DataIpInfos basetypes.ListValue `tfsdk:"data_ip_infos"`
-	state       attr.ValueState
+	DataIpInfos  basetypes.ListValue   `tfsdk:"data_ip_infos"`
+	EsxIpAddress basetypes.StringValue `tfsdk:"esx_ip_address"`
+	state        attr.ValueState
 }
 
 func (v ServerNetworkValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 1)
+	attrTypes := make(map[string]tftypes.Type, 2)
 
 	var val tftypes.Value
 	var err error
@@ -1358,12 +1402,13 @@ func (v ServerNetworkValue) ToTerraformValue(ctx context.Context) (tftypes.Value
 	attrTypes["data_ip_infos"] = basetypes.ListType{
 		ElemType: DataIpInfosValue{}.Type(ctx),
 	}.TerraformType(ctx)
+	attrTypes["esx_ip_address"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 1)
+		vals := make(map[string]tftypes.Value, 2)
 
 		val, err = v.DataIpInfos.ToTerraformValue(ctx)
 
@@ -1372,6 +1417,14 @@ func (v ServerNetworkValue) ToTerraformValue(ctx context.Context) (tftypes.Value
 		}
 
 		vals["data_ip_infos"] = val
+
+		val, err = v.EsxIpAddress.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["esx_ip_address"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -1435,6 +1488,7 @@ func (v ServerNetworkValue) ToObjectValue(ctx context.Context) (basetypes.Object
 		"data_ip_infos": basetypes.ListType{
 			ElemType: DataIpInfosValue{}.Type(ctx),
 		},
+		"esx_ip_address": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -1448,7 +1502,8 @@ func (v ServerNetworkValue) ToObjectValue(ctx context.Context) (basetypes.Object
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"data_ip_infos": dataIpInfos,
+			"data_ip_infos":  dataIpInfos,
+			"esx_ip_address": v.EsxIpAddress,
 		})
 
 	return objVal, diags
@@ -1473,6 +1528,10 @@ func (v ServerNetworkValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.EsxIpAddress.Equal(other.EsxIpAddress) {
+		return false
+	}
+
 	return true
 }
 
@@ -1489,6 +1548,7 @@ func (v ServerNetworkValue) AttributeTypes(ctx context.Context) map[string]attr.
 		"data_ip_infos": basetypes.ListType{
 			ElemType: DataIpInfosValue{}.Type(ctx),
 		},
+		"esx_ip_address": basetypes.StringType{},
 	}
 }
 
