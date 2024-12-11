@@ -90,6 +90,7 @@ func TestAccServerResource(t *testing.T) {
 	        }
 	        server_network = [
 	                {
+	                        esx_ip_address = "10.0.0.88"
 	                        data_ip_infos = [
 	                                {
 	                                        ip_address = "16.182.105.217"
@@ -137,6 +138,10 @@ func TestAccServerResource(t *testing.T) {
 		resource.TestCheckResourceAttrSet(
 			"hpegl_pc_server.test",
 			"hypervisor_host.hypervisor_host_ip",
+		),
+		resource.TestCheckResourceAttrSet(
+			"hpegl_pc_server.test",
+			"server_network.0.esx_ip_address",
 		),
 		checkUUIDAttr("hpegl_pc_server.test", "id"),
 		checkUUIDAttr("hpegl_pc_server.test", "system_id"),
@@ -212,6 +217,11 @@ func TestAccServerResource(t *testing.T) {
 				"hpegl_pc_server.test",
 				"hypervisor_host.hypervisor_host_ip",
 				"16.182.105.217",
+			),
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_server.test",
+				"server_network.0.esx_ip_address",
+				"10.0.0.88",
 			),
 		)
 	}

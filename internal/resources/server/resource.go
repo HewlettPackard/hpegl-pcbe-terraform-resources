@@ -106,6 +106,8 @@ func parseNetworksToPostFormat(dataP *ServerModel) (
 		NewV1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetwork()
 	net.SetDataIpInfos(dataIps)
 	net.SetIloMgmtIpInfo(iloIPInfos)
+	esxIPAddress := serverNetwork.EsxIpAddress.ValueString()
+	net.SetEsxIpAddress(&esxIPAddress)
 
 	postRequestNetworks = []privatecloudbusiness.
 		V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetworkable{net}
@@ -352,6 +354,12 @@ func doRead(
 
 	// TODO: (API) Add esxRootCredentialId when FF-31524 is addressed
 	// TODO: (API) Add iloAdminCredentialId when FF-31525 is addressed
+
+	// Note: esxIpAddress is an outlier: it is part of an RPC-style
+	// call. It only exists for the duration of the add-hypervisor-server
+	// operation, and is never used again. It does not fit cleanly into
+	// terraform's declarative model. We will never be able to read this
+	// value back from the server.
 }
 
 func doCreate(
