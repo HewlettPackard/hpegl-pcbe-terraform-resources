@@ -42,6 +42,7 @@ resource "hpegl_pc_server" "test" {
         }
         server_network = [
                 {
+                        esx_ip_address = "10.0.0.88"
                         data_ip_infos = [
                                 {
                                         ip_address = "16.182.105.217"
