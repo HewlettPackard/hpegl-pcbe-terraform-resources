@@ -67,6 +67,11 @@ func CreateV1beta1CspAccountsItemCspSubnetsItemWithSubnetGetResponse_WithSubnetG
 // GetFieldDeserializers the deserialization information for the current model
 // returns a map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error) when successful
 func (m *V1beta1CspAccountsItemCspSubnetsItemWithSubnetGetResponse_WithSubnetGetResponse_cspInfo) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
+    if m.GetV1beta1CspAccountsItemCspSubnetsItemWithSubnetGetResponseCspInfoMember1() != nil {
+        return m.GetV1beta1CspAccountsItemCspSubnetsItemWithSubnetGetResponseCspInfoMember1().GetFieldDeserializers()
+    } else if m.GetV1beta1CspAccountsItemCspSubnetsItemWithSubnetGetResponseCspInfoMember2() != nil {
+        return m.GetV1beta1CspAccountsItemCspSubnetsItemWithSubnetGetResponseCspInfoMember2().GetFieldDeserializers()
+    }
     return make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
 }
 // GetIsComposedType determines if the current object is a wrapper around a composed type
