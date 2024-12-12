@@ -13,10 +13,6 @@ type V1beta1HypervisorManagersHypervisorItemRequestBuilder struct {
 // HypervisorPatchRequestBody composed type wrapper for classes V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able, V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able
 type HypervisorPatchRequestBody struct {
     // Composed type representation for type V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able
-    hypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1 V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able
-    // Composed type representation for type V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able
-    hypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2 V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able
-    // Composed type representation for type V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able
     v1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1 V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able
     // Composed type representation for type V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able
     v1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2 V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able
@@ -50,17 +46,12 @@ func CreateHypervisorPatchRequestBodyFromDiscriminatorValue(parseNode i878a80d23
 // GetFieldDeserializers the deserialization information for the current model
 // returns a map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error) when successful
 func (m *HypervisorPatchRequestBody) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
+    if m.GetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1() != nil {
+        return m.GetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1().GetFieldDeserializers()
+    } else if m.GetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2() != nil {
+        return m.GetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2().GetFieldDeserializers()
+    }
     return make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-}
-// GetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1 gets the V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1 property value. Composed type representation for type V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able
-// returns a V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able when successful
-func (m *HypervisorPatchRequestBody) GetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1()(V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able) {
-    return m.hypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1
-}
-// GetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2 gets the V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2 property value. Composed type representation for type V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able
-// returns a V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able when successful
-func (m *HypervisorPatchRequestBody) GetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2()(V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able) {
-    return m.hypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2
 }
 // GetIsComposedType determines if the current object is a wrapper around a composed type
 // returns a bool when successful
@@ -79,17 +70,7 @@ func (m *HypervisorPatchRequestBody) GetV1beta1HypervisorManagersItemHypervisorP
 }
 // Serialize serializes information the current object
 func (m *HypervisorPatchRequestBody) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
-    if m.GetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1() != nil {
-        err := writer.WriteObjectValue("", m.GetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1())
-        if err != nil {
-            return err
-        }
-    } else if m.GetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2() != nil {
-        err := writer.WriteObjectValue("", m.GetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2())
-        if err != nil {
-            return err
-        }
-    } else if m.GetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1() != nil {
+    if m.GetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1() != nil {
         err := writer.WriteObjectValue("", m.GetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1())
         if err != nil {
             return err
@@ -101,14 +82,6 @@ func (m *HypervisorPatchRequestBody) Serialize(writer i878a80d2330e89d26896388a3
         }
     }
     return nil
-}
-// SetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1 sets the V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1 property value. Composed type representation for type V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able
-func (m *HypervisorPatchRequestBody) SetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1(value V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able)() {
-    m.hypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1 = value
-}
-// SetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2 sets the V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2 property value. Composed type representation for type V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able
-func (m *HypervisorPatchRequestBody) SetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2(value V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able)() {
-    m.hypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2 = value
 }
 // SetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1 sets the V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1 property value. Composed type representation for type V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able
 func (m *HypervisorPatchRequestBody) SetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1(value V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able)() {
@@ -141,12 +114,8 @@ type V1beta1HypervisorManagersHypervisorItemRequestBuilderPatchRequestConfigurat
 }
 type HypervisorPatchRequestBodyable interface {
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
-    GetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1()(V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able)
-    GetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2()(V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able)
     GetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1()(V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able)
     GetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2()(V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able)
-    SetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1(value V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able)()
-    SetHypervisorPatchRequestBodyV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2(value V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able)()
     SetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1(value V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember1able)()
     SetV1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2(value V1beta1HypervisorManagersItemHypervisorPatchRequestBodyMember2able)()
 }

@@ -13,10 +13,6 @@ type V1beta1HypervisorManagersRequestBuilder struct {
 // HypervisorManagersPostRequestBody composed type wrapper for classes V1beta1HypervisorManagersPostRequestBodyMember1able, V1beta1HypervisorManagersPostRequestBodyMember2able
 type HypervisorManagersPostRequestBody struct {
     // Composed type representation for type V1beta1HypervisorManagersPostRequestBodyMember1able
-    hypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember1 V1beta1HypervisorManagersPostRequestBodyMember1able
-    // Composed type representation for type V1beta1HypervisorManagersPostRequestBodyMember2able
-    hypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember2 V1beta1HypervisorManagersPostRequestBodyMember2able
-    // Composed type representation for type V1beta1HypervisorManagersPostRequestBodyMember1able
     v1beta1HypervisorManagersPostRequestBodyMember1 V1beta1HypervisorManagersPostRequestBodyMember1able
     // Composed type representation for type V1beta1HypervisorManagersPostRequestBodyMember2able
     v1beta1HypervisorManagersPostRequestBodyMember2 V1beta1HypervisorManagersPostRequestBodyMember2able
@@ -50,17 +46,12 @@ func CreateHypervisorManagersPostRequestBodyFromDiscriminatorValue(parseNode i87
 // GetFieldDeserializers the deserialization information for the current model
 // returns a map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error) when successful
 func (m *HypervisorManagersPostRequestBody) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
+    if m.GetV1beta1HypervisorManagersPostRequestBodyMember1() != nil {
+        return m.GetV1beta1HypervisorManagersPostRequestBodyMember1().GetFieldDeserializers()
+    } else if m.GetV1beta1HypervisorManagersPostRequestBodyMember2() != nil {
+        return m.GetV1beta1HypervisorManagersPostRequestBodyMember2().GetFieldDeserializers()
+    }
     return make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-}
-// GetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember1 gets the V1beta1HypervisorManagersPostRequestBodyMember1 property value. Composed type representation for type V1beta1HypervisorManagersPostRequestBodyMember1able
-// returns a V1beta1HypervisorManagersPostRequestBodyMember1able when successful
-func (m *HypervisorManagersPostRequestBody) GetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember1()(V1beta1HypervisorManagersPostRequestBodyMember1able) {
-    return m.hypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember1
-}
-// GetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember2 gets the V1beta1HypervisorManagersPostRequestBodyMember2 property value. Composed type representation for type V1beta1HypervisorManagersPostRequestBodyMember2able
-// returns a V1beta1HypervisorManagersPostRequestBodyMember2able when successful
-func (m *HypervisorManagersPostRequestBody) GetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember2()(V1beta1HypervisorManagersPostRequestBodyMember2able) {
-    return m.hypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember2
 }
 // GetIsComposedType determines if the current object is a wrapper around a composed type
 // returns a bool when successful
@@ -89,26 +80,8 @@ func (m *HypervisorManagersPostRequestBody) Serialize(writer i878a80d2330e89d268
         if err != nil {
             return err
         }
-    } else if m.GetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember1() != nil {
-        err := writer.WriteObjectValue("", m.GetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember1())
-        if err != nil {
-            return err
-        }
-    } else if m.GetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember2() != nil {
-        err := writer.WriteObjectValue("", m.GetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember2())
-        if err != nil {
-            return err
-        }
     }
     return nil
-}
-// SetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember1 sets the V1beta1HypervisorManagersPostRequestBodyMember1 property value. Composed type representation for type V1beta1HypervisorManagersPostRequestBodyMember1able
-func (m *HypervisorManagersPostRequestBody) SetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember1(value V1beta1HypervisorManagersPostRequestBodyMember1able)() {
-    m.hypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember1 = value
-}
-// SetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember2 sets the V1beta1HypervisorManagersPostRequestBodyMember2 property value. Composed type representation for type V1beta1HypervisorManagersPostRequestBodyMember2able
-func (m *HypervisorManagersPostRequestBody) SetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember2(value V1beta1HypervisorManagersPostRequestBodyMember2able)() {
-    m.hypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember2 = value
 }
 // SetV1beta1HypervisorManagersPostRequestBodyMember1 sets the V1beta1HypervisorManagersPostRequestBodyMember1 property value. Composed type representation for type V1beta1HypervisorManagersPostRequestBodyMember1able
 func (m *HypervisorManagersPostRequestBody) SetV1beta1HypervisorManagersPostRequestBodyMember1(value V1beta1HypervisorManagersPostRequestBodyMember1able)() {
@@ -149,12 +122,8 @@ type V1beta1HypervisorManagersRequestBuilderPostRequestConfiguration struct {
 }
 type HypervisorManagersPostRequestBodyable interface {
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
-    GetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember1()(V1beta1HypervisorManagersPostRequestBodyMember1able)
-    GetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember2()(V1beta1HypervisorManagersPostRequestBodyMember2able)
     GetV1beta1HypervisorManagersPostRequestBodyMember1()(V1beta1HypervisorManagersPostRequestBodyMember1able)
     GetV1beta1HypervisorManagersPostRequestBodyMember2()(V1beta1HypervisorManagersPostRequestBodyMember2able)
-    SetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember1(value V1beta1HypervisorManagersPostRequestBodyMember1able)()
-    SetHypervisorManagersPostRequestBodyV1beta1HypervisorManagersPostRequestBodyMember2(value V1beta1HypervisorManagersPostRequestBodyMember2able)()
     SetV1beta1HypervisorManagersPostRequestBodyMember1(value V1beta1HypervisorManagersPostRequestBodyMember1able)()
     SetV1beta1HypervisorManagersPostRequestBodyMember2(value V1beta1HypervisorManagersPostRequestBodyMember2able)()
 }
