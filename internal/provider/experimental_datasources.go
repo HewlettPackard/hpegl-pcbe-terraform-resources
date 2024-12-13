@@ -6,6 +6,7 @@ package provider
 
 import (
 	"context"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/datasources/secret"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/datasources/system"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 )
@@ -16,5 +17,6 @@ func (p *PCBeProvider) DataSources(
 ) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		system.NewDataSource,
+		secret.NewDataSource,
 	}
 }

@@ -15,7 +15,7 @@ provider "hpegl" {
 
     http_dump       = true
     # poll_interval in seconds
-    poll_interval   = 10.0
+    poll_interval   = 1.0
     max_polls       = 10
   }
 }
