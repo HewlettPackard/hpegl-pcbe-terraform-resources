@@ -8,6 +8,7 @@ import (
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/debug"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/defaults"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/async"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/dataservices"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/systems"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt"
 	"github.com/microsoft/kiota-abstractions-go/authentication"
@@ -117,6 +118,38 @@ func (c *PCBeClient) NewSysClient(
 
 	adapter.SetBaseUrl(c.Config.Host)
 	sysClient := systems.NewApiClient(adapter)
+
+	return sysClient, headerOpts, nil
+}
+
+func (c *PCBeClient) NewDataServicesClient(
+	ctx context.Context,
+) (*dataservices.ApiClient, *nethttplibrary.HeadersInspectionOptions, error) {
+	var middlewares []nethttplibrary.Middleware
+
+	tp := auth.NewPcbeAccessTokenProvider(c.Config.Token)
+	authProvider := authentication.NewBaseBearerTokenAuthenticationProvider(tp)
+	observeOpts := nethttplibrary.ObservabilityOptions{}
+	if c.Config.HTTPDump {
+		debugOpts := debug.NewInspectionOptions()
+		debugOpts.Enabled = true
+		debugOptsHandler := debug.NewInspectionHandlerWithOptions(*debugOpts)
+		middlewares = append(middlewares, debugOptsHandler)
+	}
+	headerOpts := nethttplibrary.NewHeadersInspectionOptions()
+	headerOpts.InspectResponseHeaders = true
+	headerOptsHandler := nethttplibrary.NewHeadersInspectionHandlerWithOptions(*headerOpts)
+	middlewares = append(middlewares, headerOptsHandler)
+	httpclient := nethttplibrary.GetDefaultClient(middlewares...)
+	httpclient.Timeout = c.Config.HTTPTimeout
+
+	adapter, err := nethttplibrary.NewNetHttpRequestAdapterWithParseNodeFactoryAndSerializationWriterFactoryAndHttpClientAndObservabilityOptions(authProvider, nil, nil, httpclient, observeOpts) // nolint: lll
+	if err != nil {
+		return nil, nil, err
+	}
+
+	adapter.SetBaseUrl(c.Config.Host)
+	sysClient := dataservices.NewApiClient(adapter)
 
 	return sysClient, headerOpts, nil
 }
