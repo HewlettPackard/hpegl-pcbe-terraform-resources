@@ -18,7 +18,7 @@ func simulateSecretGetByName() {
 
 	gock.New("http://localhost").
 		Get("/data-services/v1beta1/secrets").
-		MatchParam("filter", "name eq "+secretName).
+		MatchParam("filter", "name eq "+"'"+secretName+"'").
 		MatchHeader("Authorization", "Bearer abcdefghijklmnopqrstuvwxyz-0123456789").
 		Reply(200).
 		SetHeader("Content-Type", "application/json").
@@ -26,7 +26,7 @@ func simulateSecretGetByName() {
 
 	gock.New("http://localhost").
 		Get("/data-services/v1beta1/secrets").
-		MatchParam("filter", "name eq "+secretName).
+		MatchParam("filter", "name eq "+"'"+secretName+"'").
 		MatchHeader("Authorization", "Bearer expired-token").
 		Reply(401).
 		SetHeader("Content-Type", "text/plain").
