@@ -62,7 +62,7 @@ func (s *DataSource) Configure(
 }
 
 func createNameFilter(name string) string {
-	return constants.NameFilter + name
+	return constants.NameFilter + "'" + name + "'"
 }
 
 func getSecretByName(
