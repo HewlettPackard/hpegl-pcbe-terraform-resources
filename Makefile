@@ -57,7 +57,10 @@ demo:
 	env TF_LOG=INFO env TF_CLI_CONFIG_FILE=$$tfconfig \
 		terraform -chdir=examples apply -auto-approve; \
 	env TF_LOG=INFO env TF_CLI_CONFIG_FILE=$$tfconfig \
-		terraform -chdir=examples destroy -auto-approve
+		terraform -chdir=examples destroy -auto-approve; \
+	env TF_LOG=INFO env TF_CLI_CONFIG_FILE=$$tfconfig \
+		terraform -chdir=examples import hpegl_pc_datastore.my_datastore \
+		126fd201-9e6e-5e31-9ffb-a766265b1fd3,698de955-87b5-5fe6-b683-78c3948beede
 
 lint:
 	@golangci-lint --version
