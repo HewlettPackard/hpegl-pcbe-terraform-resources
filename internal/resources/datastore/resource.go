@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/async"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
@@ -210,6 +211,27 @@ func doRead(
 	}
 
 	(*dataP).CapacityInBytes = types.Int64Value(*capacityInBytes)
+
+	datastoreType := datastore.GetAdditionalData()["datastoreType"]
+	if datastoreType == nil {
+		(*diagsP).AddError(
+			"error reading datastore",
+			"'datastoreType' is nil",
+		)
+
+		return
+	}
+
+	datastoreTypeString, ok := datastoreType.(*string)
+	if !ok {
+		(*diagsP).AddError(
+			"error reading datastore",
+			"'datastoreType' is invalid",
+		)
+
+		return
+	}
+	(*dataP).DatastoreType = types.StringValue(*datastoreTypeString)
 
 	datacentersInfo := datastore.GetDatacentersInfo()
 	if datacentersInfo == nil {
@@ -588,10 +610,39 @@ func (r *Resource) Delete(
 	}
 }
 
+// Import only grants access to a single "ID" parameter. Therefore, we have to
+// combine the "hci_cluster_uuid" and datastore "id" values into the single
+// req.ID string
+func parseImportID(
+	id string,
+) (clusterID string, datastoreID string, error error) {
+	params := strings.Split(id, ",")
+	if len(params) != 2 || params[0] == "" || params[1] == "" {
+		return "", "", errors.New("invalid import ID format")
+	}
+
+	return params[0], params[1], nil
+}
+
 func (r *Resource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
-	resource.ImportStatePassthroughID(ctx, tfpath.Root("id"), req, resp)
+	clusterID, datastoreID, err := parseImportID(req.ID)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"import has invalid datastore id format",
+			"Provided import ID \""+req.ID+"\" is invalid. "+
+				"Format must be \"<hci_cluster_uuid>,<datastore_id>\". For example: "+
+				"f8d3e2fd-a0e0-41a3-83b3-a8f92b21a9f3,e8beff7c-6fc8-42f4-bb9f-8e2935d69918",
+		)
+
+		return
+	}
+
+	diags := resp.State.SetAttribute(ctx, tfpath.Root("id"), datastoreID)
+	resp.Diagnostics.Append(diags...)
+	diags = resp.State.SetAttribute(ctx, tfpath.Root("hci_cluster_uuid"), clusterID)
+	resp.Diagnostics.Append(diags...)
 }

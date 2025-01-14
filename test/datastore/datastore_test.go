@@ -62,6 +62,17 @@ func checkUUIDAttr(resource string, attr string) func(*terraform.State) error {
 	}
 }
 
+func testAccCheckResourceDestroyed(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		// Check if the resource is in the state
+		if rs, ok := s.RootModule().Resources[resourceName]; ok {
+			return fmt.Errorf("Resource %s still exists: %v", resourceName, rs.Primary.ID)
+		}
+
+		return nil
+	}
+}
+
 func TestAccDatastoreResourceOk(t *testing.T) {
 	config := providerConfig + `
 	resource "hpegl_pc_datastore" "test" {
@@ -74,7 +85,6 @@ func TestAccDatastoreResourceOk(t *testing.T) {
 		}
 	}
 	`
-
 	checks := []resource.TestCheckFunc{
 		resource.TestCheckResourceAttr(
 			"hpegl_pc_datastore.test",
@@ -124,6 +134,29 @@ func TestAccDatastoreResourceOk(t *testing.T) {
 				Config:             config,
 				Check:              checkFn,
 				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+			{
+				// Destroy by specifying empty config
+				Config: providerConfig,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckResourceDestroyed("hpegl_pc_datastore.test"),
+				),
+			},
+			{
+				// Import
+				Check:              checkFn,
+				Config:             config,
+				ImportState:        true,
+				ResourceName:       "hpegl_pc_datastore.test",
+				ImportStateId:      "126fd201-9e6e-5e31-9ffb-a766265b1fd3,698de955-87b5-5fe6-b683-78c3948beede",
+				ImportStatePersist: true,
+			},
+			{
+				// Check post import state matches the resource config
+				// e.g. verfies 'name' in state matches 'name' in config
+				Config:             config,
+				Check:              checkFn,
 				ExpectNonEmptyPlan: false,
 			},
 		},
