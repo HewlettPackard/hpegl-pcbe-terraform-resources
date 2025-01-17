@@ -448,6 +448,37 @@ func TestAccDatastoreResourceMissingClusterId(t *testing.T) {
 	})
 }
 
+func TestAccDatastoreImportBadId(t *testing.T) {
+	config := providerConfig + `
+	resource "hpegl_pc_datastore" "test" {
+		name = "mclaren-ds19"
+		hci_cluster_uuid = "126fd201-9e6e-5e31-9ffb-a766265b1fd3"
+		datastore_type = "VVOL"
+		capacity_in_bytes = 17179869184
+		cluster_info = {
+			"name": "5305-CL"
+		}
+	}
+	`
+
+	expected := `import has invalid datastore id format(.|\n)*698de955-87b5-5fe6-b683-78c3948beede`
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				// Import
+				ExpectError:  regexp.MustCompile(expected),
+				Config:       config,
+				ImportState:  true,
+				ResourceName: "hpegl_pc_datastore.test",
+				// Invalid id (not "<hci_cluster_uuid>,<cluster_info.id>,<datastore_name>")
+				ImportStateId:      "698de955-87b5-5fe6-b683-78c3948beede",
+				ImportStatePersist: true,
+			},
+		},
+	})
+}
+
 func TestAccDatastoreResourceMissingName(t *testing.T) {
 	config := providerConfig + `
 	resource "hpegl_pc_datastore" "test" {
