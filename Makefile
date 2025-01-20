@@ -60,7 +60,10 @@ demo:
 		terraform -chdir=examples destroy -auto-approve; \
 	env TF_LOG=INFO env TF_CLI_CONFIG_FILE=$$tfconfig \
 		terraform -chdir=examples import hpegl_pc_datastore.my_datastore \
-		126fd201-9e6e-5e31-9ffb-a766265b1fd3,698de955-87b5-5fe6-b683-78c3948beede
+		126fd201-9e6e-5e31-9ffb-a766265b1fd3,698de955-87b5-5fe6-b683-78c3948beede; \
+	env TF_LOG=INFO env TF_CLI_CONFIG_FILE=$$tfconfig \
+		terraform -chdir=examples import hpegl_pc_hypervisor_cluster.my_hypervisor_cluster \
+		298a299e-78f5-5acb-86ce-4e9fdc290ab7
 
 lint:
 	@golangci-lint --version
