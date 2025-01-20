@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/async"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
@@ -247,35 +248,11 @@ func doRead(
 		return
 	}
 
-	// If this doesn't match, something is wrong
-	if *hypervisorClusterID != (*dataP).HypervisorHost.HypervisorClusterId.ValueString() {
-		(*diagsP).AddError(
-			"error reading server",
-			"'hypervisor cluster id' mismatch "+
-				(*dataP).HypervisorHost.HypervisorClusterId.ValueString()+
-				" != "+*hypervisorClusterID,
-		)
-
-		return
-	}
-
 	hypervisorHostIP := server.GetHypervisorHost().GetHypervisorHostIp()
 	if hypervisorHostIP == nil {
 		(*diagsP).AddError(
 			"error reading server",
 			"'hypervisor host ip' is nil",
-		)
-
-		return
-	}
-
-	// If this doesn't match, something is wrong
-	if *hypervisorHostIP != (*dataP).HypervisorHost.HypervisorHostIp.ValueString() {
-		(*diagsP).AddError(
-			"error reading server",
-			"'hypervisor host ip' mismatch "+
-				(*dataP).HypervisorHost.HypervisorHostIp.ValueString()+
-				" != "+*hypervisorHostIP,
 		)
 
 		return
@@ -329,6 +306,62 @@ func doRead(
 	}
 
 	(*dataP).HypervisorHost = hypervisorHost
+
+	iloNetInfo := server.GetIloNetworkInfo()
+	if iloNetInfo == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'ilo network info' is nil",
+		)
+
+		return
+	}
+	iloGateway := server.GetIloNetworkInfo().GetGateway()
+	if iloGateway == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'ilo network info gateway' is nil",
+		)
+
+		return
+	}
+
+	iloIP := server.GetIloNetworkInfo().GetIloIp()
+	if iloIP == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'ilo network info ip address' is nil",
+		)
+
+		return
+	}
+
+	iloSubnetMask := server.GetIloNetworkInfo().GetSubnetMask()
+	if iloSubnetMask == nil {
+		(*diagsP).AddError(
+			"error reading server",
+			"'ilo network info subnet mask' is nil",
+		)
+
+		return
+	}
+
+	value = map[string]attr.Value{
+		"gateway":     types.StringValue(*iloGateway),
+		"ilo_ip":      types.StringValue(*iloIP),
+		"subnet_mask": types.StringValue(*iloSubnetMask),
+	}
+
+	iloNetworkInfo, diags := NewIloNetworkInfoValue(
+		(*dataP).IloNetworkInfo.AttributeTypes(ctx), value,
+	)
+
+	(*diagsP).Append(diags...)
+	if (*diagsP).HasError() {
+		return
+	}
+
+	(*dataP).IloNetworkInfo = iloNetworkInfo
 
 	if server.GetSerialNumber() == nil {
 		(*diagsP).AddError(
@@ -574,10 +607,39 @@ func (r *Resource) Delete(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Import only grants access to a single "ID" parameter. Therefore, we have to
+// combine the "hci_cluster_uuid" and datastore "id" values into the single
+// req.ID string
+func parseImportID(
+	id string,
+) (systemID string, clusterID string, error error) {
+	params := strings.Split(id, ",")
+	if len(params) != 2 || params[0] == "" || params[1] == "" {
+		return "", "", errors.New("invalid import ID format")
+	}
+
+	return params[0], params[1], nil
+}
+
 func (r *Resource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
-	resource.ImportStatePassthroughID(ctx, tfpath.Root("id"), req, resp)
+	systemID, serverID, err := parseImportID(req.ID)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"import has invalid server id format",
+			"Provided import ID \""+req.ID+"\" is invalid. "+
+				"Format must be \"<system_id>,<server_id>\". For example: "+
+				"126fd201-9e6e-5e31-9ffb-a766265b1fd3,697e8cbf-df7e-570c-a3c7-912d4ce8375a",
+		)
+
+		return
+	}
+
+	diags := resp.State.SetAttribute(ctx, tfpath.Root("id"), serverID)
+	resp.Diagnostics.Append(diags...)
+	diags = resp.State.SetAttribute(ctx, tfpath.Root("system_id"), systemID)
+	resp.Diagnostics.Append(diags...)
 }
