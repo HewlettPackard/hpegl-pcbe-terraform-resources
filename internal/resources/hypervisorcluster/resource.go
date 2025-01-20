@@ -126,17 +126,6 @@ func doRead(
 		return
 	}
 
-	systemID := (*dataP).HciClusterUuid.ValueString()
-	if *(getResp.GetHciClusterUuid()) != systemID {
-		(*diagsP).AddError(
-			"error reading hypervisor cluster "+hypervisorClusterID,
-			fmt.Sprintf("'hciClusterUuid' mismatch: %s != %s",
-				*(getResp.GetHciClusterUuid()), systemID),
-		)
-
-		return
-	}
-
 	(*dataP).HciClusterUuid = types.StringValue(*(getResp.GetHciClusterUuid()))
 
 	if getResp.GetName() == nil {
@@ -220,7 +209,16 @@ func doRead(
 		return
 	}
 
-	(*dataP).AppInfo.Vmware = vmwareValueObj
+	m = map[string]attr.Value{
+		"vmware": vmwareValueObj,
+	}
+
+	appInfoValue, diags := NewAppInfoValue(AppInfoValue{}.AttributeTypes(ctx), m)
+	(*diagsP).Append(diags...)
+	if (*diagsP).HasError() {
+		return
+	}
+	(*dataP).AppInfo = appInfoValue
 }
 
 func doCreate(
