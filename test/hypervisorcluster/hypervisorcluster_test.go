@@ -127,6 +127,22 @@ func TestAccHypervisorclusterResource(t *testing.T) {
 					testAccCheckResourceDestroyed("hpegl_pc_hypervisor_cluster.test"),
 				),
 			},
+			{
+				// Import
+				Check:              checkFn,
+				Config:             config1,
+				ImportState:        true,
+				ResourceName:       "hpegl_pc_hypervisor_cluster.test",
+				ImportStateId:      "298a299e-78f5-5acb-86ce-4e9fdc290ab7",
+				ImportStatePersist: true,
+			},
+			{
+				// Check post import state matches the resource config
+				// e.g. verfies 'name' in state matches 'name' in config
+				Config:             config1,
+				Check:              checkFn,
+				ExpectNonEmptyPlan: false,
+			},
 		},
 	})
 }
