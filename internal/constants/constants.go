@@ -12,4 +12,8 @@ const (
 	TaskHypervisorCluster = "hypervisor-cluster" // task's "associatedResources" string
 	TaskHypervisorServer  = "server"             // task's "associatedResources" string
 	TaskDatastore         = "datastore"          // task's "associatedResources" string
+
+	// For authentication
+	ClientIDEnvVar     = "PCBE_CLIENT_ID"
+	ClientSecretEnvVar = "PCBE_CLIENT_SECRET" // nolint: gosec
 )
