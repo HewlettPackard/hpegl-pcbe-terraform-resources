@@ -133,7 +133,7 @@ func TestAccHypervisorclusterResource(t *testing.T) {
 				Config:             config1,
 				ImportState:        true,
 				ResourceName:       "hpegl_pc_hypervisor_cluster.test",
-				ImportStateId:      "298a299e-78f5-5acb-86ce-4e9fdc290ab7",
+				ImportStateId:      "126fd201-9e6e-5e31-9ffb-a766265b1fd3,mclaren01",
 				ImportStatePersist: true,
 			},
 			{

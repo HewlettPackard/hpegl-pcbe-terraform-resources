@@ -63,7 +63,7 @@ demo:
 		126fd201-9e6e-5e31-9ffb-a766265b1fd3,298a299e-78f5-5acb-86ce-4e9fdc290ab7,mclaren-ds19; \
 	env TF_LOG=INFO env TF_CLI_CONFIG_FILE=$$tfconfig \
 		terraform -chdir=examples import hpegl_pc_hypervisor_cluster.my_hypervisor_cluster \
-		298a299e-78f5-5acb-86ce-4e9fdc290ab7
+		126fd201-9e6e-5e31-9ffb-a766265b1fd3,mclaren01;
 
 lint:
 	@golangci-lint --version

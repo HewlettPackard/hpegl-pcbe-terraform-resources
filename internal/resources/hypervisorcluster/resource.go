@@ -4,12 +4,15 @@ package hypervisorcluster
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/async"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/constants"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/errordefs"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/systems/privatecloudbusiness"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt/virtualization"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -64,118 +67,157 @@ func (r *Resource) Configure(
 	r.client = req.ProviderData.(*client.PCBeClient)
 }
 
-func doRead(
+func createHypervisorClusterFilter(
+	hciClusterUUID string,
+	hypervisorClusterName string,
+) string {
+	return constants.HciClusterUUIDFilter + hciClusterUUID +
+		constants.AndFilter +
+		constants.NameFilter + hypervisorClusterName
+}
+
+func getHypervisorCluster(
 	ctx context.Context,
 	client client.PCBeClient,
+	hciClusterUUID string, // "system" ID
+	name string,
+) (virtualization.V1beta1HypervisorClustersGetResponse_itemsable, error) {
+	virtClient, _, err := client.NewVirtClient(ctx)
+	if err != nil {
+		msg := "error getting hypervisor cluster ID for " +
+			name + err.Error()
+		tflog.Error(ctx, msg)
+
+		return nil, errors.New(msg)
+	}
+	qp := virtualization.V1beta1HypervisorClustersRequestBuilderGetQueryParameters{}
+	filter := createHypervisorClusterFilter(hciClusterUUID, name)
+	qp.Filter = &filter
+	grc := virtualization.
+		V1beta1HypervisorClustersRequestBuilderGetRequestConfiguration{}
+	grc.QueryParameters = &qp
+
+	hypervisorClusters, err := virtClient.Virtualization().
+		V1beta1().
+		HypervisorClusters().
+		GetAsHypervisorClustersGetResponse(ctx, &grc)
+	if err != nil {
+		msg := "error getting hypervisor cluster ID for " +
+			name + err.Error()
+		tflog.Error(ctx, msg)
+
+		return nil, errors.New(msg)
+	}
+
+	if hypervisorClusters.GetTotal() == nil {
+		msg := "error getting hypervisor cluster ID for " +
+			name + " 'total' field is nil"
+		tflog.Error(ctx, msg)
+
+		return nil, errors.New(msg)
+	}
+
+	total := *(hypervisorClusters.GetTotal())
+	if total == 0 {
+		// We don't have a hypervisor cluster with the given name
+		return nil, errordefs.NewNotFoundError(name)
+	}
+
+	if total != 1 {
+		msg := "error getting hypervisor cluster ID for " +
+			name +
+			fmt.Sprintf("required 1 hypervisorCluster with name %s, got %d",
+				name, total)
+		tflog.Error(ctx, msg)
+
+		return nil, errors.New(msg)
+	}
+
+	return hypervisorClusters.GetItems()[0], nil
+}
+
+func doRead(
+	ctx context.Context,
+	cluster virtualization.V1beta1HypervisorClustersGetResponse_itemsable,
 	dataP *HypervisorclusterModel,
 	diagsP *diag.Diagnostics,
 ) {
-	hypervisorClusterID := (*dataP).Id.ValueString()
-
-	grc := virtualization.
-		V1beta1HypervisorClustersClusterItemRequestBuilderGetRequestConfiguration{}
-	virtClient, _, err := client.NewVirtClient(ctx)
-	if err != nil {
+	if cluster.GetId() == nil {
 		(*diagsP).AddError(
-			"error reading hypervisor cluster "+hypervisorClusterID,
-			"unexpected error creating client: "+err.Error(),
-		)
-
-		return
-	}
-
-	getResp, err := virtClient.Virtualization().
-		V1beta1().
-		HypervisorClusters().
-		ByClusterId(hypervisorClusterID).
-		GetAsClusterGetResponse(ctx, &grc)
-	if err != nil {
-		(*diagsP).AddError(
-			"error reading hypervisor cluster "+hypervisorClusterID,
-			"unexpected error: "+err.Error(),
-		)
-
-		return
-	}
-
-	if getResp.GetId() == nil {
-		(*diagsP).AddError(
-			"error reading hypervisor cluster "+hypervisorClusterID,
+			"error reading hypervisor cluster ",
 			"'id' is nil",
 		)
 
 		return
 	}
 
-	if *(getResp.GetId()) != hypervisorClusterID {
-		(*diagsP).AddError(
-			"error reading hypervisor cluster "+hypervisorClusterID,
-			fmt.Sprintf("'id' mismatch: %s != %s",
-				*(getResp.GetId()), hypervisorClusterID),
-		)
+	(*dataP).Id = types.StringValue(*(cluster.GetId()))
 
-		return
-	}
-
-	if getResp.GetHciClusterUuid() == nil {
+	if cluster.GetHciClusterUuid() == nil {
 		(*diagsP).AddError(
-			"error reading hypervisor cluster "+hypervisorClusterID,
+			"error reading hypervisor cluster "+
+				(*dataP).Id.ValueString(),
 			"'hciClusterUuid' is nil",
 		)
 
 		return
 	}
 
-	(*dataP).HciClusterUuid = types.StringValue(*(getResp.GetHciClusterUuid()))
+	(*dataP).HciClusterUuid = types.StringValue(*(cluster.GetHciClusterUuid()))
 
-	if getResp.GetName() == nil {
+	if cluster.GetName() == nil {
 		(*diagsP).AddError(
-			"error reading hypervisor cluster "+hypervisorClusterID,
+			"error reading hypervisor cluster "+
+				(*dataP).Id.ValueString(),
 			"'name' is nil",
 		)
 
 		return
 	}
 
-	(*dataP).Name = types.StringValue(*(getResp.GetName()))
+	(*dataP).Name = types.StringValue(*(cluster.GetName()))
 
-	if getResp.GetAppInfo() == nil {
+	if cluster.GetAppInfo() == nil {
 		(*diagsP).AddError(
-			"error reading hypervisor cluster "+hypervisorClusterID,
+			"error reading hypervisor cluster "+
+				(*dataP).Id.ValueString(),
 			"'appInfo' is nil",
 		)
 
 		return
 	}
 
-	if getResp.GetAppInfo().GetVmware() == nil {
+	if cluster.GetAppInfo().GetVmware() == nil {
 		(*diagsP).AddError(
-			"error reading hypervisor cluster "+hypervisorClusterID,
+			"error reading hypervisor cluster "+
+				(*dataP).Id.ValueString(),
 			"'vmware' is nil",
 		)
 
 		return
 	}
 
-	if getResp.GetAppInfo().GetVmware().GetDatacenterInfo() == nil {
+	if cluster.GetAppInfo().GetVmware().GetDatacenterInfo() == nil {
 		(*diagsP).AddError(
-			"error reading hypervisor cluster "+hypervisorClusterID,
+			"error reading hypervisor cluster "+
+				(*dataP).Id.ValueString(),
 			"'datacenterInfo' is nil",
 		)
 
 		return
 	}
 
-	if getResp.GetAppInfo().GetVmware().GetDatacenterInfo().GetName() == nil {
+	if cluster.GetAppInfo().GetVmware().GetDatacenterInfo().GetName() == nil {
 		(*diagsP).AddError(
-			"error reading hypervisor cluster "+hypervisorClusterID,
+			"error reading hypervisor cluster "+
+				(*dataP).Id.ValueString(),
 			"'datacenterInfo.name' is nil",
 		)
 
 		return
 	}
 
-	dsName := getResp.GetAppInfo().GetVmware().GetDatacenterInfo().GetName()
+	dsName := cluster.GetAppInfo().GetVmware().GetDatacenterInfo().GetName()
 
 	m := map[string]attr.Value{
 		"name": types.StringValue(*dsName),
@@ -225,21 +267,17 @@ func doCreate(
 	ctx context.Context,
 	client client.PCBeClient,
 	dataP *HypervisorclusterModel,
-	diagsP *diag.Diagnostics,
-) {
+) error {
+	name := (*dataP).Name.ValueString()
 	sysClient, sysHeaderOpts, err := client.NewSysClient(ctx)
 	if err != nil {
-		(*diagsP).AddError(
-			"error creating hypervisorcluster",
-			"unexpected error: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to create client "+err.Error())
 
-		return
+		return errordefs.NewClientError(name)
 	}
 
 	prb := privatecloudbusiness.
 		NewV1beta1SystemsItemAddHypervisorClusterPostRequestBody()
-	name := (*dataP).Name.ValueString()
 	prb.SetHypervisorClusterName(&name)
 
 	// TODO: (API) Support configureVds when FF-28975 is addressed
@@ -250,9 +288,8 @@ func doCreate(
 		(*dataP).AppInfo.Vmware.AttributeTypes(ctx),
 		(*dataP).AppInfo.Vmware.Attributes(),
 	)
-	(*diagsP).Append(diags...)
 	if diags.HasError() {
-		return
+		return errordefs.NewValueError("vmware")
 	}
 
 	datacenterInfo, diags := NewDatacenterInfoValue(
@@ -260,9 +297,8 @@ func doCreate(
 		vmware.DatacenterInfo.Attributes(),
 	)
 
-	(*diagsP).Append(diags...)
 	if diags.HasError() {
-		return
+		return errordefs.NewValueError("datacenterinfo")
 	}
 
 	dataCenterName := datacenterInfo.Name.ValueString()
@@ -277,16 +313,14 @@ func doCreate(
 		AddHypervisorCluster().
 		Post(ctx, prb, &prc)
 	if err != nil {
-		(*diagsP).AddError(
-			"error creating hypervisorcluster",
-			"unexpected error: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to create resource "+err.Error())
 
-		return
+		return errordefs.NewCreateError(name)
 	}
 
 	location := sysHeaderOpts.GetResponseHeaders().Get("Location")[0]
 	sysHeaderOpts.ResponseHeaders.Clear()
+
 	operationID := path.Base(location)
 	asyncOperation := async.New(
 		ctx,
@@ -296,26 +330,24 @@ func doCreate(
 	)
 	err = asyncOperation.Poll()
 	if err != nil {
-		(*diagsP).AddError(
-			"error creating hypervisorcluster",
-			"unexpected poll error: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to poll resource "+err.Error())
 
-		return
+		return errordefs.NewPollError(name)
 	}
 
 	uri, err := asyncOperation.GetAssociatedResourceURI()
 	if err != nil {
-		(*diagsP).AddError(
-			"error creating hypervisorcluster",
-			"unexpected associated resource error: "+err.Error(),
+		tflog.Error(ctx, "failed to get associatedResourceUri: "+
+			err.Error(),
 		)
 
-		return
+		return errordefs.NewNoURIError(name)
 	}
 
 	hypervisorClusterID := path.Base(uri)
 	(*dataP).Id = types.StringValue(hypervisorClusterID)
+
+	return nil
 }
 
 func (r *Resource) Create(
@@ -330,14 +362,58 @@ func (r *Resource) Create(
 		return
 	}
 
-	doCreate(ctx, *r.client, &data, &resp.Diagnostics)
+	err := doCreate(ctx, *r.client, &data)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"create hypervisor cluster error",
+			err.Error(),
+		)
+		if errors.As(err, &errordefs.Create) ||
+			errors.As(err, &errordefs.Client) ||
+			errors.As(err, &errordefs.Value) {
+			return
+		}
+
+		// tainted state
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+		return
+	}
 	// Write state to capture the id
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	doRead(ctx, *r.client, &data, &resp.Diagnostics)
+	hypervisorCluster, err := getHypervisorCluster(
+		ctx,
+		*r.client,
+		data.HciClusterUuid.ValueString(),
+		data.Name.ValueString())
+	if err != nil {
+		if errors.As(err, &errordefs.NotFound) {
+			// gone missing, purge state
+			resp.Diagnostics.AddError(
+				"error creating hypervisor cluster "+
+					data.Name.ValueString(),
+				"hypervisor cluster missing: "+err.Error(),
+			)
+			resp.State.RemoveResource(ctx)
+
+			return
+		}
+
+		resp.Diagnostics.AddError(
+			"error creating hypervisor cluster"+
+				data.Name.ValueString(),
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	doRead(ctx, hypervisorCluster, &data, &resp.Diagnostics)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -357,7 +433,30 @@ func (r *Resource) Read(
 		return
 	}
 
-	doRead(ctx, *r.client, &data, &resp.Diagnostics)
+	hypervisorCluster, err := getHypervisorCluster(
+		ctx,
+		*r.client,
+		data.HciClusterUuid.ValueString(),
+		data.Name.ValueString(),
+	)
+	if err != nil {
+		if errors.As(err, &errordefs.NotFound) {
+			// gone missing, purge state
+			resp.State.RemoveResource(ctx)
+
+			return
+		}
+
+		resp.Diagnostics.AddError(
+			"error reading hypervisor cluster "+
+				data.Name.ValueString(),
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	doRead(ctx, hypervisorCluster, &data, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -444,10 +543,39 @@ func (r *Resource) Delete(
 	}
 }
 
+// Import only grants access to a single "ID" parameter. Therefore, we have to
+// combine the "hci_cluster_uuid" and hypervisor cluster "name" values into the
+// single req.ID string
+func parseImportID(
+	id string,
+) (systemID string, clusterName string, error error) {
+	params := strings.Split(id, ",")
+	if len(params) != 2 || params[0] == "" || params[1] == "" {
+		return "", "", errors.New("invalid import ID format")
+	}
+
+	return params[0], params[1], nil
+}
+
 func (r *Resource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
-	resource.ImportStatePassthroughID(ctx, tfpath.Root("id"), req, resp)
+	systemID, name, err := parseImportID(req.ID)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"import has invalid hypervisor cluster id format",
+			"Provided import ID \""+req.ID+"\" is invalid. "+
+				"Format must be \"<hci_cluster_uuid>,<hypervisor_cluster_name>\". For example: "+
+				"f8d3e2fd-a0e0-41a3-83b3-a8f92b21a9f3,cluster1",
+		)
+
+		return
+	}
+
+	diags := resp.State.SetAttribute(ctx, tfpath.Root("name"), name)
+	resp.Diagnostics.Append(diags...)
+	diags = resp.State.SetAttribute(ctx, tfpath.Root("hci_cluster_uuid"), systemID)
+	resp.Diagnostics.Append(diags...)
 }
