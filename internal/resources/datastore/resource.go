@@ -446,6 +446,7 @@ func (r *Resource) Create(
 		return
 	}
 
+	// Write state to capture the id
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -515,7 +516,8 @@ func (r *Resource) Read(
 		}
 
 		resp.Diagnostics.AddError(
-			"error reading datastore "+data.Name.ValueString(),
+			"error reading datastore "+
+				data.Name.ValueString(),
 			"unexpected error: "+err.Error(),
 		)
 

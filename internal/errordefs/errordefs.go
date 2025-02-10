@@ -95,3 +95,21 @@ func NewClientError(resource string) *ClientError {
 }
 
 var Client *ClientError
+
+type ValueError struct {
+	message string
+}
+
+func (e *ValueError) Error() string {
+	return e.message
+}
+
+func NewValueError(value string) *ValueError {
+	return &ValueError{
+		message: fmt.Sprintf(
+			"value error: %s", value,
+		),
+	}
+}
+
+var Value *ValueError
