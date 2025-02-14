@@ -304,71 +304,6 @@ func doRead(
 		DatacentersInfo.ElementType(ctx), datacentersInfoValues)
 }
 
-func createHypervisorClusterFilter(
-	hciClusterUUID string,
-	hypervisorClusterName string,
-) string {
-	return constants.HciClusterUUIDFilter + hciClusterUUID +
-		constants.AndFilter +
-		constants.NameFilter + hypervisorClusterName
-}
-
-func getTargetHypervisorClusterID(
-	ctx context.Context,
-	client client.PCBeClient,
-	hciClusterUUID string, // "system" ID
-	hypervisorClusterName string,
-) (string, error) {
-	virtClient, _, err := client.NewVirtClient(ctx)
-	if err != nil {
-		msg := "error getting hypervisor cluster ID for " +
-			hypervisorClusterName + err.Error()
-		tflog.Error(ctx, msg)
-
-		return "", errors.New(msg)
-	}
-	qp := virtualization.V1beta1HypervisorClustersRequestBuilderGetQueryParameters{}
-	filter := createHypervisorClusterFilter(hciClusterUUID, hypervisorClusterName)
-	qp.Filter = &filter
-	grc := virtualization.
-		V1beta1HypervisorClustersRequestBuilderGetRequestConfiguration{}
-	grc.QueryParameters = &qp
-
-	hypervisorClusters, err := virtClient.Virtualization().
-		V1beta1().
-		HypervisorClusters().
-		GetAsHypervisorClustersGetResponse(ctx, &grc)
-	if err != nil {
-		msg := "error getting hypervisor cluster ID for " +
-			hypervisorClusterName + err.Error()
-		tflog.Error(ctx, msg)
-
-		return "", errors.New(msg)
-	}
-
-	if hypervisorClusters.GetTotal() == nil {
-		msg := "error getting hypervisor cluster ID for " +
-			hypervisorClusterName + " 'total' field is nil"
-		tflog.Error(ctx, msg)
-
-		return "", errors.New(msg)
-	}
-
-	total := *(hypervisorClusters.GetTotal())
-	if total != 1 {
-		msg := "error getting hypervisor cluster ID for " +
-			hypervisorClusterName +
-			fmt.Sprintf("required 1 hypervisorCluster with name %s, got %d",
-				hypervisorClusterName, total)
-		tflog.Error(ctx, msg)
-
-		return "", errors.New(msg)
-	}
-	id := hypervisorClusters.GetItems()[0].GetId()
-
-	return *id, nil
-}
-
 func doCreate(
 	ctx context.Context,
 	client client.PCBeClient,
@@ -376,23 +311,7 @@ func doCreate(
 	diagsP *diag.Diagnostics,
 ) {
 	hciClusterUUID := (*dataP).HciClusterUuid.ValueString()
-	clusterInfoName := (*dataP).ClusterInfo.Name.ValueString()
-
-	targetHypervisorClusterID, err := getTargetHypervisorClusterID(
-		ctx,
-		client,
-		hciClusterUUID,
-		clusterInfoName,
-	)
-	if err != nil {
-		(*diagsP).AddError(
-			"error creating datastore",
-			"could not get id of hypervisor cluster: "+
-				clusterInfoName+" "+err.Error(),
-		)
-
-		return
-	}
+	hypervisorClusterID := (*dataP).ClusterInfo.Id.ValueString()
 
 	virtClient, virtHeaderOpts, err := client.NewVirtClient(ctx)
 	if err != nil {
@@ -440,7 +359,7 @@ func doCreate(
 	sizeInBytes := (*dataP).CapacityInBytes.ValueInt64()
 	prb.SetSizeInBytes(&sizeInBytes)
 
-	prb.SetTargetHypervisorClusterId(&targetHypervisorClusterID)
+	prb.SetTargetHypervisorClusterId(&hypervisorClusterID)
 	prb.SetStorageSystemId(&hciClusterUUID)
 
 	datastoreType := datastores.VMFS_DATASTORESPOSTREQUESTBODY_DATASTORETYPE

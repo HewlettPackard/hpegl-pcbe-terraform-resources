@@ -81,7 +81,7 @@ func TestAccDatastoreResourceOk(t *testing.T) {
 		capacity_in_bytes = 17179869184
 		hci_cluster_uuid = "126fd201-9e6e-5e31-9ffb-a766265b1fd3"
 		cluster_info = {
-			"name": "5305-CL"
+			"id": "298a299e-78f5-5acb-86ce-4e9fdc290ab7"
 		}
 	}
 	`
@@ -171,7 +171,7 @@ func TestAccDatastoreResourceBadDatastoreType(t *testing.T) {
 		capacity_in_bytes = 17179869184
 		hci_cluster_uuid = "126fd201-9e6e-5e31-9ffb-a766265b1fd3"
 		cluster_info = {
-			"name": "5305-CL"
+			"id": "298a299e-78f5-5acb-86ce-4e9fdc290ab7"
 		}
 	}
 	`
@@ -219,7 +219,7 @@ func TestAccDatastoreResourceMissingClusterId(t *testing.T) {
 		datastore_type = "VVOL"
 		capacity_in_bytes = 17179869184
 		cluster_info = {
-			"name": "5305-CL"
+			"id": "298a299e-78f5-5acb-86ce-4e9fdc290ab7"
 		}
 	}
 	`
@@ -244,7 +244,7 @@ func TestAccDatastoreResourceMissingName(t *testing.T) {
 		capacity_in_bytes = 17179869184
 		hci_cluster_uuid = "126fd201-9e6e-5e31-9ffb-a766265b1fd3"
 		cluster_info = {
-			"name": "5305-CL"
+			"id": "298a299e-78f5-5acb-86ce-4e9fdc290ab7"
 		}
 	}
 	`
@@ -269,7 +269,7 @@ func TestAccDatastoreResourceMissingCapacity(t *testing.T) {
 		datastore_type = "VVOL"
 		hci_cluster_uuid = "126fd201-9e6e-5e31-9ffb-a766265b1fd3"
 		cluster_info = {
-			"name": "5305-CL"
+			"id": "298a299e-78f5-5acb-86ce-4e9fdc290ab7"
 		}
 	}
 	`
@@ -287,7 +287,7 @@ func TestAccDatastoreResourceMissingCapacity(t *testing.T) {
 	})
 }
 
-func TestAccDatastoreResourceMissingClusterInfoName(t *testing.T) {
+func TestAccDatastoreResourceMissingClusterInfoId(t *testing.T) {
 	config := providerConfig + `
 	resource "hpegl_pc_datastore" "test" {
 		name = "mclaren-ds19"
@@ -299,7 +299,7 @@ func TestAccDatastoreResourceMissingClusterInfoName(t *testing.T) {
 	}
 	`
 
-	expected := `Inappropriate value for attribute \"cluster_info\": attribute \"name\"`
+	expected := `Inappropriate value for attribute \"cluster_info\": attribute \"id\"`
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
