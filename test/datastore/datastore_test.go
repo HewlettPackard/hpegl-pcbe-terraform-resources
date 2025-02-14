@@ -112,6 +112,16 @@ func TestAccDatastoreResourceOk(t *testing.T) {
 				"id",
 				"698de955-87b5-5fe6-b683-78c3948beede",
 			),
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_datastore.test",
+				"cluster_info.id",
+				"298a299e-78f5-5acb-86ce-4e9fdc290ab7",
+			),
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_datastore.test",
+				"hci_cluster_uuid",
+				"126fd201-9e6e-5e31-9ffb-a766265b1fd3",
+			),
 		)
 	}
 
@@ -145,11 +155,13 @@ func TestAccDatastoreResourceOk(t *testing.T) {
 			},
 			{
 				// Import
-				Check:              checkFn,
-				Config:             config,
-				ImportState:        true,
-				ResourceName:       "hpegl_pc_datastore.test",
-				ImportStateId:      "126fd201-9e6e-5e31-9ffb-a766265b1fd3,698de955-87b5-5fe6-b683-78c3948beede",
+				Check:        checkFn,
+				Config:       config,
+				ImportState:  true,
+				ResourceName: "hpegl_pc_datastore.test",
+				ImportStateId: "126fd201-9e6e-5e31-9ffb-a766265b1fd3," +
+					"298a299e-78f5-5acb-86ce-4e9fdc290ab7," +
+					"mclaren-ds19",
 				ImportStatePersist: true,
 			},
 			{
