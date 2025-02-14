@@ -21,19 +21,19 @@ func DatastoreResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"capacity_in_bytes": schema.Int64Attribute{
-				Required:            true,
+				Computed:            true,
 				Description:         "Size of the datastore in bytes.",
 				MarkdownDescription: "Size of the datastore in bytes.",
 			},
 			"cluster_info": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Computed:            true,
-						Description:         "UUID string uniquely identifying the hypervisor cluster.",
-						MarkdownDescription: "UUID string uniquely identifying the hypervisor cluster.",
+						Required:            true,
+						Description:         "id of the cluster as reported by the hypervisor manager.",
+						MarkdownDescription: "id of the cluster as reported by the hypervisor manager.",
 					},
 					"name": schema.StringAttribute{
-						Required:            true,
+						Computed:            true,
 						Description:         "Name of the cluster as reported by the hypervisor manager.",
 						MarkdownDescription: "Name of the cluster as reported by the hypervisor manager.",
 					},
@@ -43,7 +43,7 @@ func DatastoreResourceSchema(ctx context.Context) schema.Schema {
 						AttrTypes: ClusterInfoValue{}.AttributeTypes(ctx),
 					},
 				},
-				Required: true,
+				Computed: true,
 			},
 			"datacenters_info": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -95,18 +95,48 @@ func DatastoreResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The data store name",
 				MarkdownDescription: "The data store name",
 			},
+			"protection_job_info": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"protection_policy_info": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{
+								Computed:            true,
+								Description:         "UUID string uniquely identifying the Protection Policy.",
+								MarkdownDescription: "UUID string uniquely identifying the Protection Policy.",
+							},
+						},
+						CustomType: ProtectionPolicyInfoType{
+							ObjectType: types.ObjectType{
+								AttrTypes: ProtectionPolicyInfoValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Information about the Protection Policy that was used to create the job.\n",
+						MarkdownDescription: "Information about the Protection Policy that was used to create the job.\n",
+					},
+				},
+				CustomType: ProtectionJobInfoType{
+					ObjectType: types.ObjectType{
+						AttrTypes: ProtectionJobInfoValue{}.AttributeTypes(ctx),
+					},
+				},
+				Computed:            true,
+				Description:         "Information about the assigned Protection Policy and the Protection Job.",
+				MarkdownDescription: "Information about the assigned Protection Policy and the Protection Job.",
+			},
 		},
 	}
 }
 
 type DatastoreModel struct {
-	CapacityInBytes types.Int64      `tfsdk:"capacity_in_bytes"`
-	ClusterInfo     ClusterInfoValue `tfsdk:"cluster_info"`
-	DatacentersInfo types.List       `tfsdk:"datacenters_info"`
-	DatastoreType   types.String     `tfsdk:"datastore_type"`
-	HciClusterUuid  types.String     `tfsdk:"hci_cluster_uuid"`
-	Id              types.String     `tfsdk:"id"`
-	Name            types.String     `tfsdk:"name"`
+	CapacityInBytes   types.Int64            `tfsdk:"capacity_in_bytes"`
+	ClusterInfo       ClusterInfoValue       `tfsdk:"cluster_info"`
+	DatacentersInfo   types.List             `tfsdk:"datacenters_info"`
+	DatastoreType     types.String           `tfsdk:"datastore_type"`
+	HciClusterUuid    types.String           `tfsdk:"hci_cluster_uuid"`
+	Id                types.String           `tfsdk:"id"`
+	Name              types.String           `tfsdk:"name"`
+	ProtectionJobInfo ProtectionJobInfoValue `tfsdk:"protection_job_info"`
 }
 
 var _ basetypes.ObjectTypable = ClusterInfoType{}
@@ -864,5 +894,680 @@ func (v DatacentersInfoValue) AttributeTypes(ctx context.Context) map[string]att
 	return map[string]attr.Type{
 		"id":   basetypes.StringType{},
 		"name": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = ProtectionJobInfoType{}
+
+type ProtectionJobInfoType struct {
+	basetypes.ObjectType
+}
+
+func (t ProtectionJobInfoType) Equal(o attr.Type) bool {
+	other, ok := o.(ProtectionJobInfoType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ProtectionJobInfoType) String() string {
+	return "ProtectionJobInfoType"
+}
+
+func (t ProtectionJobInfoType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	protectionPolicyInfoAttribute, ok := attributes["protection_policy_info"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`protection_policy_info is missing from object`)
+
+		return nil, diags
+	}
+
+	protectionPolicyInfoVal, ok := protectionPolicyInfoAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`protection_policy_info expected to be basetypes.ObjectValue, was: %T`, protectionPolicyInfoAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ProtectionJobInfoValue{
+		ProtectionPolicyInfo: protectionPolicyInfoVal,
+		state:                attr.ValueStateKnown,
+	}, diags
+}
+
+func NewProtectionJobInfoValueNull() ProtectionJobInfoValue {
+	return ProtectionJobInfoValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewProtectionJobInfoValueUnknown() ProtectionJobInfoValue {
+	return ProtectionJobInfoValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewProtectionJobInfoValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ProtectionJobInfoValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ProtectionJobInfoValue Attribute Value",
+				"While creating a ProtectionJobInfoValue value, a missing attribute value was detected. "+
+					"A ProtectionJobInfoValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ProtectionJobInfoValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ProtectionJobInfoValue Attribute Type",
+				"While creating a ProtectionJobInfoValue value, an invalid attribute value was detected. "+
+					"A ProtectionJobInfoValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ProtectionJobInfoValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ProtectionJobInfoValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ProtectionJobInfoValue Attribute Value",
+				"While creating a ProtectionJobInfoValue value, an extra attribute value was detected. "+
+					"A ProtectionJobInfoValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ProtectionJobInfoValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewProtectionJobInfoValueUnknown(), diags
+	}
+
+	protectionPolicyInfoAttribute, ok := attributes["protection_policy_info"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`protection_policy_info is missing from object`)
+
+		return NewProtectionJobInfoValueUnknown(), diags
+	}
+
+	protectionPolicyInfoVal, ok := protectionPolicyInfoAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`protection_policy_info expected to be basetypes.ObjectValue, was: %T`, protectionPolicyInfoAttribute))
+	}
+
+	if diags.HasError() {
+		return NewProtectionJobInfoValueUnknown(), diags
+	}
+
+	return ProtectionJobInfoValue{
+		ProtectionPolicyInfo: protectionPolicyInfoVal,
+		state:                attr.ValueStateKnown,
+	}, diags
+}
+
+func NewProtectionJobInfoValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ProtectionJobInfoValue {
+	object, diags := NewProtectionJobInfoValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewProtectionJobInfoValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ProtectionJobInfoType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewProtectionJobInfoValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewProtectionJobInfoValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewProtectionJobInfoValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewProtectionJobInfoValueMust(ProtectionJobInfoValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ProtectionJobInfoType) ValueType(ctx context.Context) attr.Value {
+	return ProtectionJobInfoValue{}
+}
+
+var _ basetypes.ObjectValuable = ProtectionJobInfoValue{}
+
+type ProtectionJobInfoValue struct {
+	ProtectionPolicyInfo basetypes.ObjectValue `tfsdk:"protection_policy_info"`
+	state                attr.ValueState
+}
+
+func (v ProtectionJobInfoValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 1)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["protection_policy_info"] = basetypes.ObjectType{
+		AttrTypes: ProtectionPolicyInfoValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 1)
+
+		val, err = v.ProtectionPolicyInfo.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["protection_policy_info"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ProtectionJobInfoValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ProtectionJobInfoValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ProtectionJobInfoValue) String() string {
+	return "ProtectionJobInfoValue"
+}
+
+func (v ProtectionJobInfoValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var protectionPolicyInfo basetypes.ObjectValue
+
+	if v.ProtectionPolicyInfo.IsNull() {
+		protectionPolicyInfo = types.ObjectNull(
+			ProtectionPolicyInfoValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.ProtectionPolicyInfo.IsUnknown() {
+		protectionPolicyInfo = types.ObjectUnknown(
+			ProtectionPolicyInfoValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.ProtectionPolicyInfo.IsNull() && !v.ProtectionPolicyInfo.IsUnknown() {
+		protectionPolicyInfo = types.ObjectValueMust(
+			ProtectionPolicyInfoValue{}.AttributeTypes(ctx),
+			v.ProtectionPolicyInfo.Attributes(),
+		)
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"protection_policy_info": basetypes.ObjectType{
+			AttrTypes: ProtectionPolicyInfoValue{}.AttributeTypes(ctx),
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"protection_policy_info": protectionPolicyInfo,
+		})
+
+	return objVal, diags
+}
+
+func (v ProtectionJobInfoValue) Equal(o attr.Value) bool {
+	other, ok := o.(ProtectionJobInfoValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.ProtectionPolicyInfo.Equal(other.ProtectionPolicyInfo) {
+		return false
+	}
+
+	return true
+}
+
+func (v ProtectionJobInfoValue) Type(ctx context.Context) attr.Type {
+	return ProtectionJobInfoType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ProtectionJobInfoValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"protection_policy_info": basetypes.ObjectType{
+			AttrTypes: ProtectionPolicyInfoValue{}.AttributeTypes(ctx),
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = ProtectionPolicyInfoType{}
+
+type ProtectionPolicyInfoType struct {
+	basetypes.ObjectType
+}
+
+func (t ProtectionPolicyInfoType) Equal(o attr.Type) bool {
+	other, ok := o.(ProtectionPolicyInfoType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ProtectionPolicyInfoType) String() string {
+	return "ProtectionPolicyInfoType"
+}
+
+func (t ProtectionPolicyInfoType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return nil, diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ProtectionPolicyInfoValue{
+		Id:    idVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewProtectionPolicyInfoValueNull() ProtectionPolicyInfoValue {
+	return ProtectionPolicyInfoValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewProtectionPolicyInfoValueUnknown() ProtectionPolicyInfoValue {
+	return ProtectionPolicyInfoValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewProtectionPolicyInfoValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ProtectionPolicyInfoValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ProtectionPolicyInfoValue Attribute Value",
+				"While creating a ProtectionPolicyInfoValue value, a missing attribute value was detected. "+
+					"A ProtectionPolicyInfoValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ProtectionPolicyInfoValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ProtectionPolicyInfoValue Attribute Type",
+				"While creating a ProtectionPolicyInfoValue value, an invalid attribute value was detected. "+
+					"A ProtectionPolicyInfoValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ProtectionPolicyInfoValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ProtectionPolicyInfoValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ProtectionPolicyInfoValue Attribute Value",
+				"While creating a ProtectionPolicyInfoValue value, an extra attribute value was detected. "+
+					"A ProtectionPolicyInfoValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ProtectionPolicyInfoValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewProtectionPolicyInfoValueUnknown(), diags
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return NewProtectionPolicyInfoValueUnknown(), diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	if diags.HasError() {
+		return NewProtectionPolicyInfoValueUnknown(), diags
+	}
+
+	return ProtectionPolicyInfoValue{
+		Id:    idVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewProtectionPolicyInfoValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ProtectionPolicyInfoValue {
+	object, diags := NewProtectionPolicyInfoValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewProtectionPolicyInfoValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ProtectionPolicyInfoType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewProtectionPolicyInfoValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewProtectionPolicyInfoValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewProtectionPolicyInfoValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewProtectionPolicyInfoValueMust(ProtectionPolicyInfoValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ProtectionPolicyInfoType) ValueType(ctx context.Context) attr.Value {
+	return ProtectionPolicyInfoValue{}
+}
+
+var _ basetypes.ObjectValuable = ProtectionPolicyInfoValue{}
+
+type ProtectionPolicyInfoValue struct {
+	Id    basetypes.StringValue `tfsdk:"id"`
+	state attr.ValueState
+}
+
+func (v ProtectionPolicyInfoValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 1)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 1)
+
+		val, err = v.Id.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["id"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ProtectionPolicyInfoValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ProtectionPolicyInfoValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ProtectionPolicyInfoValue) String() string {
+	return "ProtectionPolicyInfoValue"
+}
+
+func (v ProtectionPolicyInfoValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"id": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"id": v.Id,
+		})
+
+	return objVal, diags
+}
+
+func (v ProtectionPolicyInfoValue) Equal(o attr.Value) bool {
+	other, ok := o.(ProtectionPolicyInfoValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	return true
+}
+
+func (v ProtectionPolicyInfoValue) Type(ctx context.Context) attr.Type {
+	return ProtectionPolicyInfoType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ProtectionPolicyInfoValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"id": basetypes.StringType{},
 	}
 }
