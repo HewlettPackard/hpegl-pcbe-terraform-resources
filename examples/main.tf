@@ -14,7 +14,7 @@ resource "hpegl_pc_datastore" "my_datastore" {
         capacity_in_bytes = 17179869184
         hci_cluster_uuid = data.hpegl_pc_system.my_system.id
         cluster_info = {
-                "name": "5305-CL"
+                "id": hpegl_pc_hypervisor_cluster.my_hypervisor_cluster.id
         }
 }
 
