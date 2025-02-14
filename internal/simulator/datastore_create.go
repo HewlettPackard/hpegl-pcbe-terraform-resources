@@ -34,9 +34,10 @@ var dsGet string
 
 func datastoreCreate() {
 	taskID := "be55685c-f84f-4ad5-a3d1-2d7692ed47b1"
-	datastoreID := "698de955-87b5-5fe6-b683-78c3948beede"
-	hypervisorClusterID := "126fd201-9e6e-5e31-9ffb-a766265b1fd3" // nolint goconst
+	datastoreName := "mclaren-ds19"
+	hypervisorClusterID := "298a299e-78f5-5acb-86ce-4e9fdc290ab7" // nolint goconst
 	clusterName := "5305-CL"
+	systemID := "126fd201-9e6e-5e31-9ffb-a766265b1fd3" // nolint goconst
 
 	gock.New("http://localhost").
 		Get("/virtualization/v1beta1/hypervisor-clusters").
@@ -84,8 +85,22 @@ func datastoreCreate() {
 		BodyString(dsAsync5)
 
 	gock.New("http://localhost").
-		Get("/virtualization/v1beta1/datastores/"+datastoreID).
+		Get("/virtualization/v1beta1/datastores").
+		MatchParam("filter", "hciClusterUuid eq "+systemID+
+			" and name eq "+datastoreName+
+			" and clusterInfo.id eq "+hypervisorClusterID).
+		MatchHeader("Authorization", "Bearer abcdefghijklmnopqrstuvwxyz-0123456789").
 		Reply(200).
 		SetHeader("Content-Type", "application/json").
 		BodyString(dsGet)
+
+	gock.New("http://localhost").
+		Get("/virtualization/v1beta1/datastores").
+		MatchParam("filter", "hciClusterUuid eq "+systemID+
+			" and name eq "+datastoreName+
+			" and clusterInfo.id eq "+hypervisorClusterID).
+		MatchHeader("Authorization", "Bearer missing-datastore").
+		Reply(200).
+		SetHeader("Content-Type", "application/json").
+		BodyString(`{"items":null,"count":0,"offset":0,"total":0}`)
 }

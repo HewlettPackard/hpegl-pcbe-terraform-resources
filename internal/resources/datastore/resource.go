@@ -5,13 +5,13 @@ package datastore
 import (
 	"context"
 	"errors"
-	"fmt"
 	"path"
 	"strings"
 
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/async"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/constants"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/errordefs"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt/virtualization"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt/virtualization/v1beta1/datastores"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -68,39 +68,10 @@ func (r *Resource) Configure(
 
 func doRead(
 	ctx context.Context,
-	client client.PCBeClient,
+	datastore virtualization.V1beta1DatastoresGetResponse_itemsable,
 	dataP *DatastoreModel,
 	diagsP *diag.Diagnostics,
 ) {
-	virtClient, _, err := client.NewVirtClient(ctx)
-	if err != nil {
-		(*diagsP).AddError(
-			"error reading datastore",
-			"unexpected error: "+err.Error(),
-		)
-
-		return
-	}
-
-	datastoreID := (*dataP).Id.ValueString()
-
-	grc := virtualization.
-		V1beta1DatastoresDatastoresItemRequestBuilderGetRequestConfiguration{}
-
-	datastore, err := virtClient.Virtualization().
-		V1beta1().
-		Datastores().
-		ById(datastoreID).
-		GetAsDatastoresGetResponse(ctx, &grc)
-	if err != nil {
-		(*diagsP).AddError(
-			"error reading datastore",
-			"get datastore by ID returned: "+err.Error(),
-		)
-
-		return
-	}
-
 	if datastore.GetId() == nil {
 		(*diagsP).AddError(
 			"error reading datastore",
@@ -110,33 +81,12 @@ func doRead(
 		return
 	}
 
-	if *(datastore.GetId()) != datastoreID {
-		(*diagsP).AddError(
-			"error reading datastore",
-			fmt.Sprintf("'id' mismatch: %s != %s",
-				*(datastore.GetId()), datastoreID,
-			),
-		)
-
-		return
-	}
+	(*dataP).Id = types.StringValue(*(datastore.GetId()))
 
 	if datastore.GetHciClusterUuid() == nil {
 		(*diagsP).AddError(
 			"error reading datastore",
 			"'hciClusterUuid' is nil",
-		)
-
-		return
-	}
-
-	systemID := (*dataP).HciClusterUuid.ValueString()
-	if *(datastore.GetHciClusterUuid()) != systemID {
-		(*diagsP).AddError(
-			"error reading datastore",
-			fmt.Sprintf("'hciClusterUuid' mismatch: %s != %s",
-				*(datastore.GetHciClusterUuid()), systemID,
-			),
 		)
 
 		return
@@ -304,27 +254,87 @@ func doRead(
 		DatacentersInfo.ElementType(ctx), datacentersInfoValues)
 }
 
+func createDatastoreFilter(
+	hciClusterUUID string,
+	hypervisorClusterID string,
+	DatastoreName string,
+) string {
+	return constants.HciClusterUUIDFilter + hciClusterUUID +
+		constants.AndFilter +
+		constants.NameFilter + DatastoreName +
+		constants.AndFilter +
+		constants.HypervisorClusterIDFilter + hypervisorClusterID
+}
+
+func getDatastore(
+	ctx context.Context,
+	client client.PCBeClient,
+	hciClusterUUID string, // "system" ID
+	hypervisorClusterID string, // "cluster" ID
+	name string, // datastore name
+) (virtualization.V1beta1DatastoresGetResponse_itemsable, error) {
+	virtClient, _, err := client.NewVirtClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := createDatastoreFilter(
+		hciClusterUUID,
+		hypervisorClusterID,
+		name,
+	)
+
+	qp := virtualization.V1beta1DatastoresRequestBuilderGetQueryParameters{}
+	qp.Filter = &filter
+
+	grc := virtualization.
+		V1beta1DatastoresRequestBuilderGetRequestConfiguration{}
+	grc.QueryParameters = &qp
+
+	datastores, err := virtClient.Virtualization().
+		V1beta1().
+		Datastores().
+		GetAsDatastoresGetResponse(ctx, &grc)
+	if err != nil {
+		return nil, err
+	}
+
+	if datastores.GetTotal() == nil {
+		return nil, errors.New("datastores 'total' field is nil")
+	}
+
+	total := *(datastores.GetTotal())
+	if total == 0 {
+		// datastore does not exist
+		return nil, errordefs.NewNotFoundError(name)
+	}
+
+	if total != 1 {
+		msg := "error getting datastore ID for " + name
+
+		return nil, errors.New(msg)
+	}
+
+	return datastores.GetItems()[0], nil
+}
+
 func doCreate(
 	ctx context.Context,
 	client client.PCBeClient,
 	dataP *DatastoreModel,
-	diagsP *diag.Diagnostics,
-) {
+) error {
 	hciClusterUUID := (*dataP).HciClusterUuid.ValueString()
-	hypervisorClusterID := (*dataP).ClusterInfo.Id.ValueString()
+	targetHypervisorClusterID := (*dataP).ClusterInfo.Id.ValueString()
+	name := (*dataP).Name.ValueString()
 
 	virtClient, virtHeaderOpts, err := client.NewVirtClient(ctx)
 	if err != nil {
-		(*diagsP).AddError(
-			"error creating datastore",
-			"unexpected error: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to create client "+err.Error())
 
-		return
+		return errordefs.NewClientError(name)
 	}
 
 	prb := virtualization.NewV1beta1DatastoresPostRequestBody()
-	name := (*dataP).Name.ValueString()
 	prb.SetName(&name)
 
 	// TODO: (API) Allow setting cipher when FF-29512 is fixed
@@ -359,7 +369,7 @@ func doCreate(
 	sizeInBytes := (*dataP).CapacityInBytes.ValueInt64()
 	prb.SetSizeInBytes(&sizeInBytes)
 
-	prb.SetTargetHypervisorClusterId(&hypervisorClusterID)
+	prb.SetTargetHypervisorClusterId(&targetHypervisorClusterID)
 	prb.SetStorageSystemId(&hciClusterUUID)
 
 	datastoreType := datastores.VMFS_DATASTORESPOSTREQUESTBODY_DATASTORETYPE
@@ -372,12 +382,9 @@ func doCreate(
 	prc := virtualization.V1beta1DatastoresRequestBuilderPostRequestConfiguration{}
 	_, err = virtClient.Virtualization().V1beta1().Datastores().Post(ctx, prb, &prc)
 	if err != nil {
-		(*diagsP).AddError(
-			"error creating datastore",
-			"unexpected error: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to create resource "+err.Error())
 
-		return
+		return errordefs.NewCreateError(name)
 	}
 
 	location := virtHeaderOpts.GetResponseHeaders().Get("Location")[0]
@@ -392,27 +399,23 @@ func doCreate(
 	)
 	err = asyncOperation.Poll()
 	if err != nil {
-		(*diagsP).AddError(
-			"error creating datastore",
-			"unexpected poll error: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to poll resource "+err.Error())
 
-		return
+		return errordefs.NewPollError(name)
 	}
 
 	// TODO: Switch to  GetAssociatedResourceURI when FF-31311 is fixed
 	uri, err := asyncOperation.GetSourceResourceURI()
 	if err != nil {
-		(*diagsP).AddError(
-			"error creating datastore",
-			"failed to get sourceResourceUri: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to get sourceResourceUri: "+err.Error())
 
-		return
+		return errordefs.NewNoURIError(name)
 	}
 
 	datastoreID := path.Base(uri)
 	(*dataP).Id = types.StringValue(datastoreID)
+
+	return nil
 }
 
 func (r *Resource) Create(
@@ -427,14 +430,55 @@ func (r *Resource) Create(
 		return
 	}
 
-	doCreate(ctx, *r.client, &data, &resp.Diagnostics)
+	err := doCreate(ctx, *r.client, &data)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"create datastore error",
+			err.Error(),
+		)
+		if errors.As(err, &errordefs.Create) || errors.As(err, &errordefs.Client) {
+			return
+		}
+
+		// tainted state
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	doRead(ctx, *r.client, &data, &resp.Diagnostics)
+	datastore, err := getDatastore(
+		ctx,
+		*r.client,
+		data.HciClusterUuid.ValueString(),
+		data.ClusterInfo.Id.ValueString(),
+		data.Name.ValueString(),
+	)
+	if err != nil {
+		if errors.As(err, &errordefs.NotFound) {
+			// gone missing, purge state
+			resp.Diagnostics.AddError(
+				"error creating datastore "+data.Name.ValueString(),
+				"datastore missing: "+err.Error(),
+			)
+			resp.State.RemoveResource(ctx)
+
+			return
+		}
+
+		resp.Diagnostics.AddError(
+			"error creating datastore"+data.Name.ValueString(),
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	doRead(ctx, datastore, &data, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -455,7 +499,30 @@ func (r *Resource) Read(
 		return
 	}
 
-	doRead(ctx, *r.client, &data, &resp.Diagnostics)
+	datastore, err := getDatastore(
+		ctx,
+		*r.client,
+		data.HciClusterUuid.ValueString(),
+		data.ClusterInfo.Id.ValueString(),
+		data.Name.ValueString(),
+	)
+	if err != nil {
+		if errors.As(err, &errordefs.NotFound) {
+			// gone missing, purge state
+			resp.State.RemoveResource(ctx)
+
+			return
+		}
+
+		resp.Diagnostics.AddError(
+			"error reading datastore "+data.Name.ValueString(),
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	doRead(ctx, datastore, &data, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -534,13 +601,13 @@ func (r *Resource) Delete(
 // req.ID string
 func parseImportID(
 	id string,
-) (clusterID string, datastoreID string, error error) {
+) (systemID string, hypervisorClusterID string, datastoreName string, error error) {
 	params := strings.Split(id, ",")
-	if len(params) != 2 || params[0] == "" || params[1] == "" {
-		return "", "", errors.New("invalid import ID format")
+	if len(params) != 3 || params[0] == "" || params[1] == "" || params[2] == "" {
+		return "", "", "", errors.New("invalid import ID format")
 	}
 
-	return params[0], params[1], nil
+	return params[0], params[1], params[2], nil
 }
 
 func (r *Resource) ImportState(
@@ -548,20 +615,28 @@ func (r *Resource) ImportState(
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
-	clusterID, datastoreID, err := parseImportID(req.ID)
+	systemID, hypervisorClusterID, datastoreName, err := parseImportID(req.ID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"import has invalid datastore id format",
 			"Provided import ID \""+req.ID+"\" is invalid. "+
-				"Format must be \"<hci_cluster_uuid>,<datastore_id>\". For example: "+
-				"f8d3e2fd-a0e0-41a3-83b3-a8f92b21a9f3,e8beff7c-6fc8-42f4-bb9f-8e2935d69918",
+				"Format must be \"<hci_cluster_uuid>,<cluster_info.id>,<datastore_name>\". For example: "+
+				"126fd201-9e6e-5e31-9ffb-a766265b1fd3,298a299e-78f5-5acb-86ce-4e9fdc290ab7,my-datastore",
 		)
 
 		return
 	}
 
-	diags := resp.State.SetAttribute(ctx, tfpath.Root("id"), datastoreID)
+	diags := resp.State.SetAttribute(
+		ctx, tfpath.Root("hci_cluster_uuid"), systemID,
+	)
 	resp.Diagnostics.Append(diags...)
-	diags = resp.State.SetAttribute(ctx, tfpath.Root("hci_cluster_uuid"), clusterID)
+	diags = resp.State.SetAttribute(
+		ctx, tfpath.Root("cluster_info").AtName("id"), hypervisorClusterID,
+	)
+	resp.Diagnostics.Append(diags...)
+	diags = resp.State.SetAttribute(
+		ctx, tfpath.Root("name"), datastoreName,
+	)
 	resp.Diagnostics.Append(diags...)
 }
