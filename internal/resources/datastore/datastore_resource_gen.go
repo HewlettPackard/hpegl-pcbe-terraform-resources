@@ -28,12 +28,12 @@ func DatastoreResourceSchema(ctx context.Context) schema.Schema {
 			"cluster_info": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Computed:            true,
-						Description:         "UUID string uniquely identifying the hypervisor cluster.",
-						MarkdownDescription: "UUID string uniquely identifying the hypervisor cluster.",
+						Required:            true,
+						Description:         "id of the cluster as reported by the hypervisor manager.",
+						MarkdownDescription: "id of the cluster as reported by the hypervisor manager.",
 					},
 					"name": schema.StringAttribute{
-						Required:            true,
+						Computed:            true,
 						Description:         "Name of the cluster as reported by the hypervisor manager.",
 						MarkdownDescription: "Name of the cluster as reported by the hypervisor manager.",
 					},
@@ -43,7 +43,9 @@ func DatastoreResourceSchema(ctx context.Context) schema.Schema {
 						AttrTypes: ClusterInfoValue{}.AttributeTypes(ctx),
 					},
 				},
-				Required: true,
+				Required:            true,
+				Description:         "",
+				MarkdownDescription: "",
 			},
 			"datacenters_info": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
