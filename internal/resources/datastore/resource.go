@@ -11,6 +11,7 @@ import (
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/async"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/constants"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/errordefs"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt/virtualization"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/virt/virtualization/v1beta1/datastores"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -304,8 +305,8 @@ func getDatastore(
 
 	total := *(datastores.GetTotal())
 	if total == 0 {
-		// No datastore with given name found
-		return nil, nil
+		// datastore does not exist
+		return nil, errordefs.NewNotFoundError(name)
 	}
 
 	if total != 1 {
@@ -321,23 +322,19 @@ func doCreate(
 	ctx context.Context,
 	client client.PCBeClient,
 	dataP *DatastoreModel,
-	diagsP *diag.Diagnostics,
-) {
+) error {
 	hciClusterUUID := (*dataP).HciClusterUuid.ValueString()
 	targetHypervisorClusterID := (*dataP).ClusterInfo.Id.ValueString()
+	name := (*dataP).Name.ValueString()
 
 	virtClient, virtHeaderOpts, err := client.NewVirtClient(ctx)
 	if err != nil {
-		(*diagsP).AddError(
-			"error creating datastore",
-			"unexpected error: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to create client "+err.Error())
 
-		return
+		return errordefs.NewClientError(name)
 	}
 
 	prb := virtualization.NewV1beta1DatastoresPostRequestBody()
-	name := (*dataP).Name.ValueString()
 	prb.SetName(&name)
 
 	// TODO: (API) Allow setting cipher when FF-29512 is fixed
@@ -385,12 +382,9 @@ func doCreate(
 	prc := virtualization.V1beta1DatastoresRequestBuilderPostRequestConfiguration{}
 	_, err = virtClient.Virtualization().V1beta1().Datastores().Post(ctx, prb, &prc)
 	if err != nil {
-		(*diagsP).AddError(
-			"error creating datastore",
-			"unexpected error: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to create resource "+err.Error())
 
-		return
+		return errordefs.NewCreateError(name)
 	}
 
 	location := virtHeaderOpts.GetResponseHeaders().Get("Location")[0]
@@ -405,27 +399,23 @@ func doCreate(
 	)
 	err = asyncOperation.Poll()
 	if err != nil {
-		(*diagsP).AddError(
-			"error creating datastore",
-			"unexpected poll error: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to poll resource "+err.Error())
 
-		return
+		return errordefs.NewPollError(name)
 	}
 
 	// TODO: Switch to  GetAssociatedResourceURI when FF-31311 is fixed
 	uri, err := asyncOperation.GetSourceResourceURI()
 	if err != nil {
-		(*diagsP).AddError(
-			"error creating datastore",
-			"failed to get sourceResourceUri: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to get sourceResourceUri: "+err.Error())
 
-		return
+		return errordefs.NewNoURIError(name)
 	}
 
 	datastoreID := path.Base(uri)
 	(*dataP).Id = types.StringValue(datastoreID)
+
+	return nil
 }
 
 func (r *Resource) Create(
@@ -440,7 +430,23 @@ func (r *Resource) Create(
 		return
 	}
 
-	doCreate(ctx, *r.client, &data, &resp.Diagnostics)
+	err := doCreate(ctx, *r.client, &data)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"create datastore error",
+			err.Error(),
+		)
+		if e, ok := err.(*errordefs.ResourceError); ok {
+			if e.IsCreate() || e.IsClient() {
+				return
+			}
+		}
+
+		// tainted state
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -455,21 +461,18 @@ func (r *Resource) Create(
 		data.Name.ValueString(),
 	)
 	if err != nil {
+		if e, ok := err.(*errordefs.ResourceError); ok {
+			// gone missing, purge state
+			if e.IsNotFound() {
+				resp.State.RemoveResource(ctx)
+
+				return
+			}
+		}
+
 		resp.Diagnostics.AddError(
 			"error reading datastore"+data.Name.ValueString(),
 			"unexpected error: "+err.Error(),
-		)
-
-		return
-	}
-
-	if datastore == nil {
-		// gone missing, purge state
-		resp.State.RemoveResource(ctx)
-
-		resp.Diagnostics.AddError(
-			"missing datastore after creation",
-			data.Name.ValueString()+" not found, removing state",
 		)
 
 		return
@@ -504,17 +507,19 @@ func (r *Resource) Read(
 		data.Name.ValueString(),
 	)
 	if err != nil {
+		if e, ok := err.(*errordefs.ResourceError); ok {
+			// gone missing, purge state
+			if e.IsNotFound() {
+				resp.State.RemoveResource(ctx)
+
+				return
+			}
+		}
+
 		resp.Diagnostics.AddError(
-			"error reading datastore"+data.Name.ValueString(),
+			"error reading datastore "+data.Name.ValueString(),
 			"unexpected error: "+err.Error(),
 		)
-
-		return
-	}
-
-	if datastore == nil {
-		// does not exist, purge state
-		resp.State.RemoveResource(ctx)
 
 		return
 	}
