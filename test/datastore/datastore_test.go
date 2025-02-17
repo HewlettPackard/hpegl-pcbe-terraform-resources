@@ -175,6 +175,111 @@ func TestAccDatastoreResourceOk(t *testing.T) {
 	})
 }
 
+// TestAccDatastoreResourceMissing ensures that if the datastore
+// resource goes missing just after POST, the state is purged
+func TestAccDatastoreResourceMissing(t *testing.T) {
+	resourceConfig := `
+	resource "hpegl_pc_datastore" "test" {
+		name = "mclaren-ds19"
+		datastore_type = "VMFS"
+		capacity_in_bytes = 17179869184
+		hci_cluster_uuid = "126fd201-9e6e-5e31-9ffb-a766265b1fd3"
+		cluster_info = {
+			"id": "298a299e-78f5-5acb-86ce-4e9fdc290ab7"
+		}
+	}
+	`
+	config := providerConfig + resourceConfig
+	// token triggers a missing datastore
+	badProviderConfig := `
+	terraform {
+		required_providers {
+		hpegl = {
+				source = "github.com/HewlettPackard/hpegl-pcbe-terraform-resources"
+			}
+		}
+	}
+
+	provider "hpegl" {
+		pc {
+			host            = "http://localhost:8080"
+			token           = "missing-datastore"
+
+			http_dump       = true
+			poll_interval   = 0.001
+			max_polls       = 10
+		}
+	}
+	`
+
+	badConfig := badProviderConfig + resourceConfig
+
+	checks := []resource.TestCheckFunc{
+		resource.TestCheckResourceAttr(
+			"hpegl_pc_datastore.test",
+			"name",
+			"mclaren-ds19",
+		),
+		resource.TestCheckResourceAttr(
+			"hpegl_pc_datastore.test",
+			"datastore_type",
+			"VMFS",
+		),
+		resource.TestCheckResourceAttr(
+			"hpegl_pc_datastore.test",
+			"capacity_in_bytes",
+			"17179869184",
+		),
+		checkUUIDAttr("hpegl_pc_datastore.test", "id"),
+	}
+
+	if simulation {
+		// In simulation mode the ID value is known in advance
+		checks = append(checks,
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_datastore.test",
+				"id",
+				"698de955-87b5-5fe6-b683-78c3948beede",
+			),
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_datastore.test",
+				"cluster_info.id",
+				"298a299e-78f5-5acb-86ce-4e9fdc290ab7",
+			),
+			resource.TestCheckResourceAttr(
+				"hpegl_pc_datastore.test",
+				"hci_cluster_uuid",
+				"126fd201-9e6e-5e31-9ffb-a766265b1fd3",
+			),
+		)
+	}
+
+	checkFn := resource.ComposeAggregateTestCheckFunc(checks...)
+
+	expected := `datastore missing: resource mclaren-ds19, not found`
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             config,
+				Check:              checkFn,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config: config,
+				Check:  checkFn,
+			},
+			{
+				Config:      badConfig,
+				Check:       checkFn,
+				ExpectError: regexp.MustCompile(expected),
+			},
+		},
+	})
+}
+
 func TestAccDatastoreResourceBadDatastoreType(t *testing.T) {
 	config := providerConfig + `
 	resource "hpegl_pc_datastore" "test" {
