@@ -64,3 +64,18 @@ If a GET of a resource determines the resource does not exist
 state for that resource will be purged. This will trigger
 a fresh create of the resource. Eg the state may go from `partial` to
 `empty` and then back to `full` during `terraform apply`.
+
+## Terraform destroy
+
+```mermaid
+flowchart TD
+    A([Start]) --> FullState[Full State]
+    FullState -->|terraform destroy| GET{GET /resource}
+    GET --> |404| EmptyState[Empty State]
+    GET --> |Ok| DELETE{DELETE /resource}
+    DELETE --> |Fail| FullState
+    DELETE --> |Ok| POLL{POLL /task}
+    POLL --> |Fail| FullState
+    POLL --> |Control-C| FullState
+    POLL --> |Ok| EmptyState
+```
