@@ -552,7 +552,37 @@ func (r *Resource) Delete(
 		return
 	}
 
-	id := data.Id.ValueString()
+	datastore, err := getDatastore(
+		ctx,
+		*r.client,
+		data.HciClusterUuid.ValueString(),
+		data.ClusterInfo.Id.ValueString(),
+		data.Name.ValueString(),
+	)
+	if err != nil {
+		if errors.As(err, &errordefs.NotFound) {
+			tflog.Debug(ctx, "datastore not found during delete")
+
+			return
+		}
+		resp.Diagnostics.AddError(
+			"error deleting datastore "+data.Name.ValueString(),
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	if datastore.GetId() == nil {
+		resp.Diagnostics.AddError(
+			"error deleting datastore",
+			"datastore has no id",
+		)
+
+		return
+	}
+	id := *(datastore.GetId())
+
 	client := *r.client
 	virtClient, virtHeaderOpts, err := client.NewVirtClient(ctx)
 	if err != nil {
