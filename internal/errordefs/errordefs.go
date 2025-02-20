@@ -113,3 +113,21 @@ func NewValueError(value string) *ValueError {
 }
 
 var Value *ValueError
+
+type NetParseError struct {
+	message string
+}
+
+func (e *NetParseError) Error() string {
+	return e.message
+}
+
+func NewNetParseError(resource string) *NetParseError {
+	return &NetParseError{
+		message: fmt.Sprintf(
+			"parse error: %s", resource,
+		),
+	}
+}
+
+var NetParse *NetParseError

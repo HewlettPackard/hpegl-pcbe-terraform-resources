@@ -77,6 +77,7 @@ func testAccCheckResourceDestroyed(resourceName string) resource.TestCheckFunc {
 func TestAccServerResource(t *testing.T) {
 	config := providerConfig + `
 	resource "hpegl_pc_server" "test" {
+	        name   = "16.182.105.217"
 	        system_id   = "126fd201-9e6e-5e31-9ffb-a766265b1fd3"
 	        esx_root_credential_id  = "cccfcad1-85b7-4162-b16e-f7cadc2c46b5"
 	        ilo_admin_credential_id = "dddfcad1-85b7-4162-b16e-f7cadc2c46b5"
@@ -257,11 +258,13 @@ func TestAccServerResource(t *testing.T) {
 			},
 			{
 				// Import
-				Check:              checkFn,
-				Config:             config,
-				ImportState:        true,
-				ResourceName:       "hpegl_pc_server.test",
-				ImportStateId:      "126fd201-9e6e-5e31-9ffb-a766265b1fd3,697e8cbf-df7e-570c-a3c7-912d4ce8375a",
+				Check:        checkFn,
+				Config:       config,
+				ImportState:  true,
+				ResourceName: "hpegl_pc_server.test",
+				ImportStateId: "126fd201-9e6e-5e31-9ffb-a766265b1fd3," +
+					"acd4daea-e5e3-5f35-8be3-ce4a4b6d946c," +
+					"16.182.105.217",
 				ImportStatePersist: true,
 			},
 			/*
@@ -282,6 +285,7 @@ func TestAccServerResource(t *testing.T) {
 func TestAccServerImportBadId(t *testing.T) {
 	config := providerConfig + `
 	resource "hpegl_pc_server" "test" {
+	        name   = "16.182.105.217"
 	        system_id   = "126fd201-9e6e-5e31-9ffb-a766265b1fd3"
 	        esx_root_credential_id  = "cccfcad1-85b7-4162-b16e-f7cadc2c46b5"
 	        ilo_admin_credential_id = "dddfcad1-85b7-4162-b16e-f7cadc2c46b5"

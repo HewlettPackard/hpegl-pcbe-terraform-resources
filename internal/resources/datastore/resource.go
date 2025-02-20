@@ -379,8 +379,13 @@ func doCreate(
 	}
 
 	prb.SetAdditionalData(datastoreTypeMap)
-	prc := virtualization.V1beta1DatastoresRequestBuilderPostRequestConfiguration{}
-	_, err = virtClient.Virtualization().V1beta1().Datastores().Post(ctx, prb, &prc)
+	prc := virtualization.
+		V1beta1DatastoresRequestBuilderPostRequestConfiguration{}
+	_, err = virtClient.
+		Virtualization().
+		V1beta1().
+		Datastores().
+		Post(ctx, prb, &prc)
 	if err != nil {
 		tflog.Error(ctx, "failed to create resource "+err.Error())
 
@@ -436,7 +441,8 @@ func (r *Resource) Create(
 			"create datastore error",
 			err.Error(),
 		)
-		if errors.As(err, &errordefs.Create) || errors.As(err, &errordefs.Client) {
+		if errors.As(err, &errordefs.Create) ||
+			errors.As(err, &errordefs.Client) {
 			return
 		}
 
@@ -480,7 +486,6 @@ func (r *Resource) Create(
 	}
 
 	doRead(ctx, datastore, &data, &resp.Diagnostics)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
