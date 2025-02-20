@@ -92,7 +92,7 @@ func ServerResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "ilo network information",
 			},
 			"name": schema.StringAttribute{
-				Computed:            true,
+				Required:            true,
 				Description:         "A system specified name for the resource.",
 				MarkdownDescription: "A system specified name for the resource.",
 			},

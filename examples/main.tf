@@ -32,6 +32,7 @@ resource "hpegl_pc_hypervisor_cluster" "my_hypervisor_cluster" {
 
 
 resource "hpegl_pc_server" "test" {
+        name = "16.182.105.217"
         system_id   = "126fd201-9e6e-5e31-9ffb-a766265b1fd3"
         esx_root_credential_id  = data.hpegl_pc_secret.my_secret.id
         ilo_admin_credential_id = "dddfcad1-85b7-4162-b16e-f7cadc2c46b5"

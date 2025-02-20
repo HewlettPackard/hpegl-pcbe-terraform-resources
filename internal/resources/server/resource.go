@@ -3,13 +3,13 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 	"path"
 	"strings"
 
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/async"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/client"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/constants"
+	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/errordefs"
 	"github.com/HewlettPackard/hpegl-pcbe-terraform-resources/internal/sdk/systems/privatecloudbusiness"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -36,8 +36,10 @@ type Resource struct {
 
 // parseNetworksToPostFormat parses the server network data from the Terraform
 // input configuration and returns a slice of server network data which can be
-// used in a POST request to the PCBe API to create a new server
-// TODO: (API) Issue FF-31496 will prevent this from working currently.
+// used in a POST request to the PCBe API to create a new server TODO: (API)
+// Issue FF-31496/FF-31582/etc will prevent this from working currently,
+// specifically we don't get enough info back from the API to populate
+// server_network fields.
 func parseNetworksToPostFormat(dataP *ServerModel) (
 	[]privatecloudbusiness.
 		V1beta1SystemsItemAddHypervisorServersPostRequestBody_serverNetworkable,
@@ -144,6 +146,66 @@ func (r *Resource) Configure(
 	r.client = req.ProviderData.(*client.PCBeClient)
 }
 
+func createServerFilter(
+	hypervisorClusterID string,
+	name string,
+) string {
+	return constants.NameFilter + "'" + name + "'" +
+		constants.AndFilter +
+		constants.ServerHypervisorClusterIDFilter +
+		"'" + hypervisorClusterID + "'"
+}
+
+func getServer(
+	ctx context.Context,
+	client client.PCBeClient,
+	hciClusterUUID string, // "system" ID
+	hypervisorClusterID string, // "cluster" ID
+	name string, // server name
+) (privatecloudbusiness.V1beta1SystemsItemServersGetResponse_itemsable, error) {
+	sysClient, _, err := client.NewSysClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	qp := privatecloudbusiness.
+		V1beta1SystemsItemServersRequestBuilderGetQueryParameters{}
+	filter := createServerFilter(hypervisorClusterID, name)
+	qp.Filter = &filter
+
+	grc := privatecloudbusiness.
+		V1beta1SystemsItemServersRequestBuilderGetRequestConfiguration{}
+	grc.QueryParameters = &qp
+
+	servers, err := sysClient.PrivateCloudBusiness().
+		V1beta1().
+		Systems().
+		ById(hciClusterUUID).
+		Servers().
+		GetAsServersGetResponse(ctx, &grc)
+	if err != nil {
+		return nil, err
+	}
+
+	if servers.GetTotal() == nil {
+		return nil, errors.New("servers 'total' field is nil")
+	}
+
+	total := *(servers.GetTotal())
+	if total == 0 {
+		// server does not exist
+		return nil, errordefs.NewNotFoundError(name)
+	}
+
+	if total != 1 {
+		msg := "error getting server ID for " + name
+
+		return nil, errors.New(msg)
+	}
+
+	return servers.GetItems()[0], nil
+}
+
 // doRead reads the server data from the PCBe API and prepares to update
 // the model.
 // Note: we check that returned fields match the 'required' value specified
@@ -152,41 +214,10 @@ func (r *Resource) Configure(
 // has changed.
 func doRead(
 	ctx context.Context,
-	client client.PCBeClient,
+	server privatecloudbusiness.V1beta1SystemsItemServersGetResponse_itemsable,
 	dataP *ServerModel,
 	diagsP *diag.Diagnostics,
 ) {
-	serverID := (*dataP).Id.ValueString()
-	systemID := (*dataP).SystemId.ValueString()
-
-	sysClient, _, err := client.NewSysClient(ctx)
-	if err != nil {
-		(*diagsP).AddError(
-			"error reading server",
-			"unexpected error: "+err.Error(),
-		)
-
-		return
-	}
-
-	grc := &privatecloudbusiness.
-		V1beta1SystemsItemServersWithServerItemRequestBuilderGetRequestConfiguration{}
-	server, err := sysClient.PrivateCloudBusiness().
-		V1beta1().
-		Systems().
-		ById(systemID).
-		Servers().
-		ByServerId(serverID).
-		GetAsWithServerGetResponse(ctx, grc)
-	if err != nil {
-		(*diagsP).AddError(
-			"error reading server",
-			"get server by ID failed: "+err.Error(),
-		)
-
-		return
-	}
-
 	if server.GetId() == nil {
 		(*diagsP).AddError(
 			"error reading server",
@@ -195,35 +226,12 @@ func doRead(
 
 		return
 	}
-
-	// If this doesn't match, something is wrong
-	if *(server.GetId()) != serverID {
-		(*diagsP).AddError(
-			"error reading server",
-			fmt.Sprintf("'id' mismatch: %s != %s",
-				*(server.GetId()), serverID,
-			),
-		)
-
-		return
-	}
+	(*dataP).Id = types.StringValue(*(server.GetId()))
 
 	if server.GetSystemId() == nil {
 		(*diagsP).AddError(
 			"error reading server",
 			"'systemID' is nil",
-		)
-
-		return
-	}
-
-	// If this doesn't match, something is wrong
-	if *(server.GetSystemId()) != systemID {
-		(*diagsP).AddError(
-			"error reading server",
-			fmt.Sprintf("'systemID' mismatch: %s != %s",
-				*(server.GetSystemId()), systemID,
-			),
 		)
 
 		return
@@ -238,7 +246,9 @@ func doRead(
 		return
 	}
 
-	hypervisorClusterID := server.GetHypervisorHost().GetHypervisorClusterId()
+	hypervisorClusterID := server.
+		GetHypervisorHost().
+		GetHypervisorClusterId()
 	if hypervisorClusterID == nil {
 		(*diagsP).AddError(
 			"error reading server",
@@ -248,7 +258,9 @@ func doRead(
 		return
 	}
 
-	hypervisorHostIP := server.GetHypervisorHost().GetHypervisorHostIp()
+	hypervisorHostIP := server.
+		GetHypervisorHost().
+		GetHypervisorHostIp()
 	if hypervisorHostIP == nil {
 		(*diagsP).AddError(
 			"error reading server",
@@ -258,7 +270,9 @@ func doRead(
 		return
 	}
 
-	hypervisorClusterName := server.GetHypervisorHost().GetHypervisorClusterName()
+	hypervisorClusterName := server.
+		GetHypervisorHost().
+		GetHypervisorClusterName()
 	if hypervisorClusterName == nil {
 		(*diagsP).AddError(
 			"error reading server",
@@ -399,14 +413,20 @@ func doCreate(
 	ctx context.Context,
 	client client.PCBeClient,
 	dataP *ServerModel,
-	diagsP *diag.Diagnostics,
-) {
+) error {
+	name := (*dataP).Name.ValueString()
+	sysClient, sysHeaderOpts, err := client.NewSysClient(ctx)
+	if err != nil {
+		tflog.Error(ctx, "failed to create client "+err.Error())
+
+		return errordefs.NewClientError(name)
+
+	}
+
 	hciClusterUUID := (*dataP).HypervisorHost.HypervisorClusterId.ValueString()
 	esxRootCredentialID := (*dataP).EsxRootCredentialId.ValueString()
 	systemID := (*dataP).SystemId.ValueString()
 	iloAdminCredentialID := (*dataP).IloAdminCredentialId.ValueString()
-	prc := privatecloudbusiness.
-		V1beta1SystemsItemAddHypervisorServersRequestBuilderPostRequestConfiguration{}
 	prb := privatecloudbusiness.
 		NewV1beta1SystemsItemAddHypervisorServersPostRequestBody()
 	prb.SetEsxRootCredentialId(&esxRootCredentialID)
@@ -415,25 +435,18 @@ func doCreate(
 
 	postRequestNetworks, err := parseNetworksToPostFormat(dataP)
 	if err != nil {
-		(*diagsP).AddError(
-			"error adding hypervisor server",
-			"could not parse server networks: "+err.Error(),
+		tflog.Error(ctx,
+			"error adding hypervisor server "+
+				"could not parse server networks: "+
+				err.Error(),
 		)
 
-		return
+		return errordefs.NewNetParseError(name)
 	}
 
 	prb.SetServerNetwork(postRequestNetworks)
-
-	sysClient, sysHeaderOpts, err := client.NewSysClient(ctx)
-	if err != nil {
-		(*diagsP).AddError(
-			"error adding hypervisor server",
-			"could not create client: "+err.Error(),
-		)
-
-		return
-	}
+	prc := privatecloudbusiness.
+		V1beta1SystemsItemAddHypervisorServersRequestBuilderPostRequestConfiguration{}
 
 	_, err = sysClient.PrivateCloudBusiness().
 		V1beta1().
@@ -441,16 +454,14 @@ func doCreate(
 		AddHypervisorServers().
 		Post(ctx, prb, &prc)
 	if err != nil {
-		(*diagsP).AddError(
-			"error adding hypervisor server",
-			"unexpected post error: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to create resource "+err.Error())
 
-		return
+		return errordefs.NewCreateError(name)
 	}
 
 	location := sysHeaderOpts.GetResponseHeaders().Get("Location")[0]
 	sysHeaderOpts.ResponseHeaders.Clear()
+
 	operationID := path.Base(location)
 	asyncOperation := async.New(
 		ctx,
@@ -458,29 +469,26 @@ func doCreate(
 		operationID,
 		constants.TaskHypervisorServer,
 	)
-
 	err = asyncOperation.Poll()
 	if err != nil {
-		(*diagsP).AddError(
-			"error adding hypervisor server",
-			"unexpected poll error: "+err.Error(),
-		)
+		tflog.Error(ctx, "failed to poll resource "+err.Error())
 
-		return
+		return errordefs.NewPollError(name)
 	}
 
 	uri, err := asyncOperation.GetAssociatedResourceURI()
 	if err != nil {
-		(*diagsP).AddError(
-			"error adding hypervisor server",
-			"failed to get associated resource uri: "+err.Error(),
+		tflog.Error(
+			ctx, "failed to get associatedResourceUri: "+err.Error(),
 		)
 
-		return
+		return errordefs.NewNoURIError(name)
 	}
 
 	serverID := path.Base(uri)
 	(*dataP).Id = types.StringValue(serverID)
+
+	return nil
 }
 
 // TODO: (API) Implement create when server create API is implemented
@@ -496,13 +504,59 @@ func (r *Resource) Create(
 		return
 	}
 
-	doCreate(ctx, *r.client, &data, &resp.Diagnostics)
+	err := doCreate(ctx, *r.client, &data)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"create server error",
+			err.Error(),
+		)
+		if errors.As(err, &errordefs.Create) ||
+			errors.As(err, &errordefs.Client) ||
+			errors.As(err, &errordefs.NetParse) {
+			return
+		}
+
+		// tainted state
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+		return
+	}
+
+	// Write state to capture the id
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	doRead(ctx, *r.client, &data, &resp.Diagnostics)
+	server, err := getServer(
+		ctx,
+		*r.client,
+		data.SystemId.ValueString(),
+		data.HypervisorHost.HypervisorClusterId.ValueString(),
+		data.Name.ValueString(),
+	)
+	if err != nil {
+		if errors.As(err, &errordefs.NotFound) {
+			// gone missing, purge state
+			resp.Diagnostics.AddError(
+				"error creating server "+data.Name.ValueString(),
+				"server missing: "+err.Error(),
+			)
+			resp.State.RemoveResource(ctx)
+
+			return
+		}
+
+		resp.Diagnostics.AddError(
+			"error creating server "+
+				data.Name.ValueString(),
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	doRead(ctx, server, &data, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -522,7 +576,31 @@ func (r *Resource) Read(
 		return
 	}
 
-	doRead(ctx, *r.client, &data, &resp.Diagnostics)
+	server, err := getServer(
+		ctx,
+		*r.client,
+		data.SystemId.ValueString(),
+		data.HypervisorHost.HypervisorClusterId.ValueString(),
+		data.Name.ValueString(),
+	)
+	if err != nil {
+		if errors.As(err, &errordefs.NotFound) {
+			// gone missing, purge state
+			resp.State.RemoveResource(ctx)
+
+			return
+		}
+
+		resp.Diagnostics.AddError(
+			"error reading server "+
+				data.Name.ValueString(),
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	doRead(ctx, server, &data, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -612,13 +690,13 @@ func (r *Resource) Delete(
 // req.ID string
 func parseImportID(
 	id string,
-) (systemID string, clusterID string, error error) {
+) (systemID string, clusterID string, serverName string, error error) {
 	params := strings.Split(id, ",")
-	if len(params) != 2 || params[0] == "" || params[1] == "" {
-		return "", "", errors.New("invalid import ID format")
+	if len(params) != 3 || params[0] == "" || params[1] == "" || params[2] == "" {
+		return "", "", "", errors.New("invalid import ID format")
 	}
 
-	return params[0], params[1], nil
+	return params[0], params[1], params[2], nil
 }
 
 func (r *Resource) ImportState(
@@ -626,20 +704,32 @@ func (r *Resource) ImportState(
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
-	systemID, serverID, err := parseImportID(req.ID)
+	systemID, hypervisorClusterID, serverName, err := parseImportID(req.ID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"import has invalid server id format",
 			"Provided import ID \""+req.ID+"\" is invalid. "+
-				"Format must be \"<system_id>,<server_id>\". For example: "+
-				"126fd201-9e6e-5e31-9ffb-a766265b1fd3,697e8cbf-df7e-570c-a3c7-912d4ce8375a",
+				"Format must be \"<system_id>,<hypervisor_host.hypervisor_cluster_id>,<server_name>. "+
+				"For example: "+
+				"126fd201-9e6e-5e31-9ffb-a766265b1fd3,298a299e-78f5-5acb-86ce-4e9fdc290ab7,server1",
 		)
 
 		return
 	}
 
-	diags := resp.State.SetAttribute(ctx, tfpath.Root("id"), serverID)
+	diags := resp.State.SetAttribute(
+		ctx, tfpath.Root("hypervisor_host").AtName("hypervisor_cluster_id"),
+		hypervisorClusterID,
+	)
 	resp.Diagnostics.Append(diags...)
-	diags = resp.State.SetAttribute(ctx, tfpath.Root("system_id"), systemID)
+
+	diags = resp.State.SetAttribute(
+		ctx, tfpath.Root("system_id"), systemID,
+	)
+	resp.Diagnostics.Append(diags...)
+
+	diags = resp.State.SetAttribute(
+		ctx, tfpath.Root("name"), serverName,
+	)
 	resp.Diagnostics.Append(diags...)
 }

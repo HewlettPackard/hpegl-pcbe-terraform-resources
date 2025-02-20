@@ -22,8 +22,9 @@ var serverGet string
 var serverTask string
 
 func simulateServerCreate() {
+	serverName := "16.182.105.217"
 	systemID := "126fd201-9e6e-5e31-9ffb-a766265b1fd3"
-	serverID := "697e8cbf-df7e-570c-a3c7-912d4ce8375a"
+	hypervisorClusterID := "acd4daea-e5e3-5f35-8be3-ce4a4b6d946c"
 	taskID := "b1b1b1b1-b1b1-b1b1-b1b1-b1b1b1b1b1b1"
 
 	gock.New("http://localhost").
@@ -40,9 +41,21 @@ func simulateServerCreate() {
 		SetHeader("Content-Type", "application/json").
 		BodyString(serverTask)
 
+	/*
+		gock.New("http://localhost").
+			Get("/private-cloud-business/v1beta1/systems/"+
+				systemID+"/servers/"+serverID).
+			Reply(200).
+			SetHeader("Content-Type", "application/json").
+			BodyString(serverGet)
+	*/
 	gock.New("http://localhost").
 		Get("/private-cloud-business/v1beta1/systems/"+
-			systemID+"/servers/"+serverID).
+			systemID+"/servers").
+		MatchParam(
+			"filter", "name eq '"+serverName+"'"+
+				" and hypervisorHost.hypervisorClusterId eq '"+hypervisorClusterID+"'",
+		).
 		Reply(200).
 		SetHeader("Content-Type", "application/json").
 		BodyString(serverGet)
