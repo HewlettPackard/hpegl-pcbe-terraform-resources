@@ -486,7 +486,38 @@ func (r *Resource) Delete(
 		return
 	}
 
-	id := data.Id.ValueString()
+	hypervisorCluster, err := getHypervisorCluster(
+		ctx,
+		*r.client,
+		data.HciClusterUuid.ValueString(),
+		data.Name.ValueString())
+	if err != nil {
+		if errors.As(err, &errordefs.NotFound) {
+			tflog.Debug(
+				ctx, "hypervisor cluster not found during delete",
+			)
+
+			return
+		}
+		resp.Diagnostics.AddError(
+			"error deleting hypervisor cluster"+
+				data.Name.ValueString(),
+			"unexpected error: "+err.Error(),
+		)
+
+		return
+	}
+
+	if hypervisorCluster.GetId() == nil {
+		resp.Diagnostics.AddError(
+			"error deleting hypervisor cluster",
+			"hypervisor cluster has no id",
+		)
+
+		return
+	}
+
+	id := *(hypervisorCluster.GetId())
 	client := *r.client
 	sysClient, sysHeaderOpts, err := client.NewSysClient(ctx)
 	if err != nil {
@@ -513,7 +544,7 @@ func (r *Resource) Delete(
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"error deleting hypervisorcluster "+id,
-			"unexpected error: "+err.Error(),
+			"delete failed with: "+err.Error(),
 		)
 
 		return
@@ -536,7 +567,7 @@ func (r *Resource) Delete(
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"error deleting hypervisorcluster "+id,
-			"unexpected error: "+err.Error(),
+			"delete failed with: "+err.Error(),
 		)
 
 		return

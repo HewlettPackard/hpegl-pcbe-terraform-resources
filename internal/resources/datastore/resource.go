@@ -616,7 +616,12 @@ func (r *Resource) Delete(
 	location := virtHeaderOpts.GetResponseHeaders().Get("Location")[0]
 	virtHeaderOpts.ResponseHeaders.Clear()
 	operationID := path.Base(location)
-	asyncOperation := async.New(ctx, client, operationID, constants.TaskDatastore)
+	asyncOperation := async.New(
+		ctx,
+		client,
+		operationID,
+		constants.TaskDatastore,
+	)
 	err = asyncOperation.Poll()
 	if err != nil {
 		resp.Diagnostics.AddError(
