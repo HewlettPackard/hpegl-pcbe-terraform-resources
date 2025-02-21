@@ -624,19 +624,45 @@ func (r *Resource) Delete(
 ) {
 	var data ServerModel
 
-	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
-	if resp.Diagnostics.HasError() {
+	server, err := getServer(
+		ctx,
+		*r.client,
+		data.SystemId.ValueString(),
+		data.HypervisorHost.HypervisorClusterId.ValueString(),
+		data.Name.ValueString(),
+	)
+	if err != nil {
+		if errors.As(err, &errordefs.NotFound) {
+			tflog.Debug(ctx, "server not found during delete")
+
+			return
+		}
+
+		resp.Diagnostics.AddError(
+			"error deleting server "+
+				data.Name.ValueString(),
+			"unexpected error: "+err.Error(),
+		)
+
 		return
 	}
+	if server.GetId() == nil {
+		resp.Diagnostics.AddError(
+			"error deleting server",
+			"server has no id",
+		)
 
-	serverID := data.Id.ValueString()
-	sysClient, sysHeaderOpts, err := r.client.NewSysClient(ctx)
+		return
+	}
+	id := *(server.GetId())
+	client := *r.client
+	sysClient, sysHeaderOpts, err := client.NewSysClient(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"error deleting hypervisor server",
-			"could not create client: "+err.Error(),
+			"error deleting server",
+			"unexpected error: "+err.Error(),
 		)
 
 		return
@@ -646,7 +672,7 @@ func (r *Resource) Delete(
 		V1beta1SystemsItemRemoveHypervisorServersRequestBuilderPostRequestConfiguration{}
 	prb := privatecloudbusiness.
 		NewV1beta1SystemsItemRemoveHypervisorServersPostRequestBody()
-	prb.SetServerIds([]string{serverID})
+	prb.SetServerIds([]string{id})
 
 	_, err = sysClient.PrivateCloudBusiness().
 		V1beta1().
@@ -667,7 +693,7 @@ func (r *Resource) Delete(
 	operationID := path.Base(location)
 	asyncOperation := async.New(
 		ctx,
-		*(r.client),
+		client,
 		operationID,
 		constants.TaskHypervisorServer,
 	)
@@ -681,8 +707,6 @@ func (r *Resource) Delete(
 
 		return
 	}
-	// delete the state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 // Import only grants access to a single "ID" parameter. Therefore, we have to
